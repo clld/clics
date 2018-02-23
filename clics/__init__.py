@@ -5,6 +5,11 @@ from clics import models
 from clics.interfaces import IEdge, IGraph
 
 
+_ = lambda s: s
+_('Parameter')
+_('Parameters')
+
+
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """

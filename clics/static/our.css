@@ -1,0 +1,44 @@
+#visualization {
+  width: 100%;
+  position: relative;
+  height: 500px;
+  background-color: white;
+  }
+
+#info {
+  background-color: white;
+	font-size: 10pt;
+	left: 5px;
+	top: 10px;
+  width: 100%;
+  overflow: auto;
+  display: table-cell;
+}
+#info.hidden {
+	display: none;
+}
+#vis {
+}
+
+tr:nth-child(even) {background: #DDD}
+tr:nth-child(odd) {background: #FFF}
+.hidden {
+	display: none;
+}
+#WorldColorScale {
+	position: absolute;
+	top: -45px;
+	right: 0px;
+}
+
+#control {
+	position: relative;
+	top: -13px;
+	left: -97px;
+}
+
+#map {
+	width: 100%;
+	height: 150px;
+}
+

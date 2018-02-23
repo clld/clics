@@ -44,6 +44,21 @@ class Concept(CustomModelMixin, Parameter):
     category = Column(Unicode)
     semanticfield = Column(Unicode)
 
+    @staticmethod
+    def refine_factory_query(query):
+        return query.options(
+            joinedload_all(Concept.lo_edges, Edge.colexifications),
+            joinedload_all(Concept.hi_edges, Edge.colexifications),
+        )
+
+    @property
+    def edges(self):
+        return sorted(
+            [(e, e.lo_concept) for e in self.lo_edges] +
+            [(e, e.hi_concept) for e in self.hi_edges],
+            key=lambda e: len(e[0].colexifications),
+            reverse=True)
+
     @property
     def neighbors(self):
         return [x.lo_concept for x in self.lo_edges] + \

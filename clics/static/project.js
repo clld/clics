@@ -2,17 +2,58 @@ CLICS = {
     "langByInfo": {}
 };
 
-CLICS.Graph = function (url, world_json) {
+
+CLICS.Graph = function (url, world_json, options) {
+    options = options === undefined ? {} : options;
     var opacity = 100;
     var coords = [];
     var projection = d3.geo.equirectangular().center([65, 25]).translate([210, 53]).scale(48);
     var path = d3.geo.path().projection(projection);
-    var g = d3.select("#map").append("svg:svg").attr("width", 300).attr("height", 200).append("g");
+    var g = d3.select("#map").append("svg:svg")
+        .attr("width", options.map_width ? options.map_width : 300)
+        .attr("height", options.map_height ? options.map_height : 200)
+        .append("g");
     var mapPoly = g.append('g').attr('class', 'mapPoly'); // for the map
     var allCircles = g.append('g').attr('class', 'allCircles'); // all locations
     var nodeCircles = g.append('g').attr('class', 'nodeCircles'); // for the
 
     displayMap();
+
+    function table(title, head, rows) {
+        var i, j, html = "<h5>" + title + ":</h5>";
+        html += '<table class="table table-condensed"><thead><tr>';
+        for (i = 0; i < head.length; i++) {
+            html += '<th>' + head[i] + '</th>';
+        }
+        html += '</tr></thead><tbody>';
+        for (i = 0; i < rows.length; i++) {
+            html += '<tr>';
+            for (j = 0; j < rows[i].length; j++) {
+                if (rows[i][j].startsWith('<td')) {
+                    html += rows[i][j];
+                } else {
+                    html += '<td>' + rows[i][j] + '</td>';
+                }
+            }
+            html += '</tr>';
+        }
+        html += '</tbody>';
+        return html;
+    }
+
+    function mapMarkers(e, data, cls, fill) {
+        e.selectAll("circle")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("class", cls)
+            .attr("cx", function (d) {return projection([d[0], d[1]])[0];})
+            .attr('cy', function (d) {return projection([d[0], d[1]])[1];})
+            .attr("r", function (d) {return 3;})
+            .style("stroke", "white")
+            .style("stroke-width", 0.5)
+            .style("fill", fill);
+    }
 
     d3.json(url, function (data) {
         var i, j, node;
@@ -24,22 +65,10 @@ CLICS.Graph = function (url, world_json) {
             coords.push([a.lon, a.lat]);
             CLICS.langByInfo[a.id] = a;
         });
-        allCircles.selectAll("circle")
-            .data(coords)
-            .enter()
-            .append("circle")
-            .attr("class", "alllocation")
-            .attr("cx", function (d) {return projection([d[0], d[1]])[0];})
-            .attr('cy', function (d) {return projection([d[0], d[1]])[1];})
-            .attr("r", function (d) {return 3;})
-            .style("stroke", "white")
-            .style("stroke-width", 0.5)
-            .style("fill", '#888');
-
+        mapMarkers(allCircles, coords, 'alllocation', '#888');
         for (i = 0; i < data.nodes.length; i++) {
             nodesById[data.nodes[i].ID] = i;
         }
-        console.log('nodesById', nodesById);
         // store all weights and nodes by links
         for (i = 0; i < data.adjacency.length; i++) {
             for (j = 0; j < data.adjacency[i].length; j++) {
@@ -52,22 +81,9 @@ CLICS.Graph = function (url, world_json) {
                 }
             }
         }
-        console.log('nodeByLink', nodeByLink);
 
         // weight scale from 0...max(weights) to 0...1
         var scale = d3.scale.linear().domain([0, d3.max(weights)]).range([0, 1]);
-
-        // longitudinal scale
-        var longsScale = d3.scale.linear().domain([-180, 180]).range([0, 1]);
-
-        // latitudinal scale
-        var latsScale = d3.scale.linear().domain([-90, 90]).range([0, 1]);
-
-        // l*a*b* scale
-        var labScale = d3.scale.linear().domain([-1, 1]).range([-128, 127]);
-
-        //
-        var lscale = d3.scale.linear().domain([0, d3.max(weights)]).range([1, 100]);
 
         // store node and link information for the force directed graph
         var nodes = [];
@@ -75,15 +91,11 @@ CLICS.Graph = function (url, world_json) {
         var labelAnchorLinks = [];
 
         for (i = 0; i < data.nodes.length; i++) {
-            node = {
-                label: data.nodes[i].Gloss,
-                OutEdge: data.nodes[i].OutEdge
-            };
+            node = {label: data.nodes[i].Gloss, OutEdge: data.nodes[i].OutEdge};
             nodes.push(node);
             labelAnchors.push({node: node});
             labelAnchors.push({node: node});
         }
-        console.log('nodes', nodes);
         // the actual nodes
         for (i = 0; i < data.adjacency.length; i++) {
             for (j = 0; j < data.adjacency[i].length; j++) {
@@ -97,7 +109,6 @@ CLICS.Graph = function (url, world_json) {
                 });
             }
         }
-        console.log('links', links);
         // the label nodes with weight 1 connected to the actual nodes
         for (i = 0; i < nodes.length; i++) {
             labelAnchorLinks.push({source: i * 2, target: i * 2 + 1, weight: 1});
@@ -135,12 +146,14 @@ CLICS.Graph = function (url, world_json) {
         }
 
         // plot the graph on an SVG
-        var w = 700, h = 600, pad = 0;
+        var w = options.width === undefined ? 700 : options.height,
+            h = options.height === undefined ? 500 : options.height,
+            pad = 0;
 
         var vis = d3.select("#vis")
             .append("svg:svg")
             .attr("width", '100%')
-            .attr("height", 500)
+            .attr("height", h)
             .on('click', function () {
                 d3.select('#info').classed('hidden', true);
                 d3.selectAll('.link').style('stroke', '#CCC');
@@ -157,9 +170,7 @@ CLICS.Graph = function (url, world_json) {
             .gravity(1)
             .linkDistance(50)
             .charge(-3000)
-            .linkStrength(function (x) {
-                return x.weight * 10
-            });
+            .linkStrength(function (x) {return x.weight * 10});
 
         force.start();
 
@@ -178,12 +189,11 @@ CLICS.Graph = function (url, world_json) {
             .data(links).enter()
             .append("svg:line")
             .attr("class", function (d, i) {
-                var weight = parseInt(d.weight * 10);
-                var weightOutput = [];
+                var weight = parseInt(d.weight * 10),
+                    weightOutput = [];
                 for (i = 0; i <= weight; i++) {
                     weightOutput.push('weight_' + i);
                 }
-
                 return "link link_" + d.source.index
                     + "-" + d.target.index + ' link_'
                     + d.target.index + "-" + d.source.index
@@ -191,67 +201,54 @@ CLICS.Graph = function (url, world_json) {
 
             })
             .style("stroke", "#CCC")
-            .style('stroke-width', function (d) {
-                return d.edge_width;
-            })
+            .style('stroke-width', function (d) {return d.edge_width;})
             .style('cursor', 'pointer')
             .on('mouseover', function (d, i) {
-                var cid_form_lid, _i;
+                var cid_form_lid;
                 d3.selectAll('.link').style('stroke', '#CCC').style('stroke-opacity', opacity / 100);
                 d3.select(this).style('stroke', 'OliveDrab').style('stroke-opacity', 1);
                 d3.select("#info")
                     .html(function () {
-                        var infolist = [];
+                        var _i,
+                            infolist = [],
+                            title = d.words.length + " ",
+                            rows = [];
                         for (_i = 0; _i < d.words.length; _i++) {
                             cid_form_lid = d.words[_i];
                             infolist.push([
+                                CLICS.langByInfo[cid_form_lid[2]].lon,
+                                CLICS.langByInfo[cid_form_lid[2]].lat,
                                 CLICS.langByInfo[cid_form_lid[2]].family,
                                 cid_form_lid[1],
                                 cid_form_lid[0],
                                 '?' + cid_form_lid[0],
                                 CLICS.langByInfo[cid_form_lid[2]].name,
-                                CLICS.langByInfo[cid_form_lid[2]].lon,
-                                CLICS.langByInfo[cid_form_lid[2]].lat,
                                 cid_form_lid[2]
                             ])
                         }
 
                         infolist.sort(function (a, b) {
-                            if (a[0] > b[0]) {return 1;}
-                            if (a[0] < b[0]) {return -1;}
-                            else {if (a[4] > b[4]) {return 1;} else {return -1;}}
+                            if (a[2] > b[2]) {return 1;}
+                            if (a[2] < b[2]) {return -1;}
+                            else {if (a[6] > b[6]) {return 1;} else {return -1;}}
                         });
 
                         d3.selectAll(".langlocation").remove();
-                        nodeCircles.selectAll("circle")
-                            .data(infolist)
-                            .enter()
-                            .append("circle")
-                            .attr("class", "langlocation")
-                            .attr("cx", function (d) {return projection([d[5], d[6]])[0];})
-                            .attr('cy', function (d) {return projection([d[5], d[6]])[1];})
-                            .attr("r", function (d) {return 3;})
-                            .style("stroke", "white")
-                            .style("stroke-width", 0.5)
-                            .style("fill", 'FireBrick');
-
-                        var infolistoutput = [];
+                        mapMarkers(nodeCircles, infolist, "langlocation", 'FireBrick');
                         infolist.forEach(function (c) {
                             var lang = CLICS.langByInfo[c[7]];
-                            infolistoutput.push(
-                                "<td><a href=\"" + CLLD.route_url('language', {'id': c[7]}) + "\">" + c[4] + "</a></td>" +
-                                "<td style=\"background-color:" + lang.color + "; color:" + lang.fontcolor + ";\">" + c[0] + "</td>" +
-                                "<td>" + c[1] + "</td>");
+                            rows.push([
+                                "<a href=\"" + CLLD.route_url('language', {'id': c[7]}) + "\">" + c[6] + "</a>",
+                                "<td style=\"background-color:" + lang.color + "; color:" + lang.fontcolor + ";\">" + c[2] + "</td>",
+                                c[3]
+                            ]);
                         });
-                        var link_label = d.words.length === 1 ? 'colexification' : 'colexifications';
-                        return "<h5>" + d.words.length + " " + link_label +
-                            " for <a href=\"" + CLLD.route_url('edge', {'id': d.eid}) + "\">&quot;" +
+                        title += d.words.length === 1 ? 'colexification' : 'colexifications';
+                        title += " for <a href=\"" + CLLD.route_url('edge', {'id': d.eid}) + "\">&quot;" +
                             d.source.label + "&quot; and &quot;"
                             + d.target.label +
-                            "&quot;</a></h5>" +
-                            "<table class=\"table table-condensed\"><tr><th>Language</th><th>Family</th>" +
-                            "<th>Form</th></tr><tr>" +
-                            infolistoutput.join('</tr><tr>') + "</tr></table>";
+                            "&quot;</a>";
+                        return table(title, ['Language', 'Family', 'Form'], rows);
                     });
                 d3.select('#info').classed('hidden', false)
             })
@@ -273,56 +270,35 @@ CLICS.Graph = function (url, world_json) {
             .style("stroke", "#FFF")
             .style("stroke-width", 3)
             .style('cursor', 'move')
-            .on('dragend', function (d) {
-                d.fixed = true;
-            });
+            .on('dragend', function (d) {d.fixed = true;});
         node.call(node_drag);
 
         var anchorLink = vis.selectAll("line.anchorLink").data(labelAnchorLinks);
-
         var anchorNode = vis.selectAll("g.anchorNode")
             .data(force2.nodes())
             .enter()
             .append("svg:g")
-            .attr("class", function (d, i) {
-                return "anchorNode_" + d.node.index;
-            });
+            .attr("class", function (d, i) {return "anchorNode_" + d.node.index;});
 
         anchorNode.append("svg:circle").attr("r", 0).style("fill", "#FFF");
 
         anchorNode.append("svg:text")
-            .attr('class', function (d, i) {
-                return "aNode aNode_" + d.node.index;
-            })
-            .text(function (d, i) {
-                return i % 2 === 0 ? "" : d.node.label;
-            })
+            .attr('class', function (d, i) {return "aNode aNode_" + d.node.index;})
+            .text(function (d, i) {return i % 2 === 0 ? "" : d.node.label;})
             .style("fill", "#555")
             .style("font-weight", function (d, i) {
-                //console.log(d);
                 // make concepts with outer edges bold
-                if (d.node.OutEdge.length > 0) {
-                    return "bold";
-                }
-                else {
-                    return "normal";
-                }
-
-                //return "underline";
+                return d.node.OutEdge.length > 0 ? 'bold' : 'normal';
             })
             .style("font-family", "Arial")
             .style("font-size", 12)
             .style('cursor', function (d, i) {
-                d.node.OutEdge.length > 0 ? cursorvalue = "pointer" : cursorvalue = "arrow";
-                return cursorvalue;
+                return d.node.OutEdge.length > 0 ? "pointer" : "arrow";
             })
             .on('mouseover', function (d, i) {
-                //console.log(d);
-
                 d3.selectAll('.link').style('stroke', '#CCC').style('stroke-opacity', opacity / 100);
                 d3.select(this).style('fill', 'DarkBlue').style('stroke-opacity', 1);
                 nodeByLink[d.node.index].forEach(function (a) {
-                    //console.log("effects ",a);
                     d3.selectAll('.aNode_' + a)
                         .style('fill', 'FireBrick').style('stroke-opacity', 1);
                     d3.selectAll('.link_' + a + "-" + d.node.index)
@@ -333,25 +309,21 @@ CLICS.Graph = function (url, world_json) {
                 if (d.node.OutEdge.length > 0) {
                     d3.select("#info")
                         .html(function () {
+                            var j,
+                                title = '<b>' + d.node.OutEdge.length,
+                                rows = [];
                             //console.log(d);
-                            if (d.node.OutEdge.length == 1) {
-                                var link_label = "<b>1 strong link ";
+                            if (d.node.OutEdge.length === 1) {
+                                title += " strong link ";
                             }
                             else {
-                                var link_label = '<b>' + d.node.OutEdge.length + " links ";
+                                title += " links ";
                             }
-                            var outstring = link_label + 'from &quot;' + d.node.label + '&quot; to other concepts:</b><br>';
-                            outstring += '<table class=\"infotable\"><tr><th>No.</th><th>Concept</th><th>Community</th><th>Families</th></tr>';
-                            for (var j = 0; j < d.node.OutEdge.length; j++) {
-                                outstring += '<tr>';
-                                outstring += '<td></td>';
-                                outstring += '<td class="infotable"><a href="http://concepticon.clld.org/parameters/' + d.node.OutEdge[j][4] + '">' + d.node.OutEdge[j][1] + '</a></td>';
-                                outstring += '<td class="infotable"><a href="?' + d.node.OutEdge[j][0] + '">' + d.node.OutEdge[j][3] + '<a></td>';
-                                outstring += '<td class="infotable">' + d.node.OutEdge[j][2] + '</td>';
-                                outstring += '</tr>';
-
+                            title += 'from &quot;' + d.node.label + '&quot; to other concepts';
+                            for (j = 0; j < d.node.OutEdge.length; j++) {
+                                rows.push(['<a href="' + CLLD.route_url('edge', {'id': d.node.OutEdge[j][0]}) + '">' + d.node.OutEdge[j][1] + '</a>']);
                             }
-                            return outstring + '</table>';
+                            return table(title, ['Concept'], rows);
                         });
                     d3.select('#info').classed('hidden', false);
                 }
@@ -420,24 +392,6 @@ CLICS.Graph = function (url, world_json) {
             link.call(updateLink);
             anchorLink.call(updateLink);
         }
-
-        // taken from http://davidad.net/colorviz/
-        // convert into lab color
-        function cl2pix(c, l) {
-            var TAU = 6.283185307179586476925287; // also known as "two pi"
-            var L = l * 0.61 + 0.09; // L of L*a*b*
-            var angle = TAU / 6.0 - c * TAU;
-            var r = l * 0.311 + 0.125; //~chroma
-            var a = Math.sin(angle) * r;
-            var b = Math.cos(angle) * r;
-            return [L, a, b];
-        }
-
-        // taken from http://www.jasondavies.com/coffee-wheel/
-        function brightness(rgb) {
-            return rgb.r * .299 + rgb.g * .587 + rgb.b * .114;
-        }
-
         force.on('tick', tick);
     });
 
@@ -458,8 +412,6 @@ CLICS.Graph = function (url, world_json) {
 
     function displayMap() {
         d3.json(world_json, function (error, topology) {
-            var countrydata = topojson.object(topology,
-                topology.objects.countries).geometries;
             mapPoly.selectAll("path")
                 .data(topojson.object(topology, topology.objects.countries)
                     .geometries)
@@ -468,10 +420,7 @@ CLICS.Graph = function (url, world_json) {
                 .attr("d", path)
                 .style("fill", "#c0c0c0")
                 .style('stroke', 'white')
-                .style('stroke-width', function (d) {
-                    return 0;
-                })
-            ;
+                .style('stroke-width', function (d) {return 0;});
         });
     }
 };

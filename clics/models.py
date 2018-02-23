@@ -69,11 +69,9 @@ class Concept(CustomModelMixin, Parameter):
         return [ga.graph for ga in self.graph_assocs]
 
     def iter_out_edges(self, graph):
-        for n in self.neighbors:
+        for e, n in self.edges:
             if n not in graph.concepts:
-                for g in n.graphs:
-                    if g != graph:
-                        yield n, g
+                yield e, n
 
     def __json__(self, req):
         return {
@@ -154,6 +152,7 @@ class Graph(Base, PolymorphicBaseMixin, IdNameDescriptionMixin):
     def __json__(self, req):
         languages = set()
         adjacency = []
+        nodes = []
         for n1 in self.concepts:
             row = []
             for n2 in n1.neighbors:
@@ -162,12 +161,16 @@ class Graph(Base, PolymorphicBaseMixin, IdNameDescriptionMixin):
                     languages = languages.union(l)
                     row.append(a)
             adjacency.append(row)
+            json = n1.__json__(req)
+            for e, n in n1.iter_out_edges(self):
+                json['OutEdge'].append([e.id, n.name])
+            nodes.append(json)
         return {
             "adjacency": adjacency,
             "directed": False,
             "graph": [],
             "multigraph": False,
-            "nodes": self.concepts,
+            "nodes": nodes,
             "languages": [
                 {
                     "glottocode": l.glottocode,

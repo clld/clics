@@ -10,15 +10,24 @@ from sqlalchemy import (
     or_,
     and_,
 )
-from sqlalchemy.orm import relationship, joinedload_all, aliased
+from sqlalchemy.orm import relationship, joinedload_all, aliased, joinedload
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from clld import interfaces
 from clld.db.meta import Base, CustomModelMixin, PolymorphicBaseMixin, DBSession
-from clld.db.models.common import Language, IdNameDescriptionMixin, Parameter, Value
+from clld.db.models.common import Language, IdNameDescriptionMixin, Parameter, Value, Contribution
+from clld.lib.color import is_bright
 
 from clics.interfaces import IEdge, IGraph
+
+
+@implementer(interfaces.IContribution)
+class ClicsDataset(CustomModelMixin, Contribution):
+    pk = Column(Integer, ForeignKey('contribution.pk'), primary_key=True)
+    author = Column(Unicode)
+    provider = Column(Unicode)
+    provider_url = Column(Unicode)
 
 
 @implementer(interfaces.ILanguage)
@@ -29,13 +38,16 @@ class Doculect(CustomModelMixin, Language):
     glottocode = Column(Unicode)
     macroarea = Column(Unicode)
     color = Column(Unicode)
+    contribution_pk = Column(Integer, ForeignKey('contribution.pk'))
+    contribution = relationship(Contribution, backref='doculects')
+
+    @staticmethod
+    def refine_factory_query(query):
+        return query.options(joinedload(Doculect.contribution))
 
     @property
     def fontcolor(self):
-        R, G, B = [int(c + c, 16) for c in self.color[1:]]
-        if 0.299 * R + 0.587 * G + 0.114 * B < 125:
-            return '#eee'
-        return '#000'
+        return '#000' if is_bright(self.color) else '#eee'
 
 
 @implementer(interfaces.IParameter)

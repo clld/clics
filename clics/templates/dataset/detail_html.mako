@@ -1,19 +1,20 @@
 <%inherit file="../home_comp.mako"/>
+<%namespace name="util" file="../util.mako"/>
 
 <%def name="sidebar()">
-    <div class="well">
-        <h3>Sidebar</h3>
-        <p>
-            Content
-        </p>
-    </div>
+    <%util:well title="Cite">
+        ${h.newline2br(h.text_citation(request, ctx))|n}
+        ${h.cite_button(request, ctx)}
+    </%util:well>
 </%def>
 
 <h2>${ctx.description}</h2>
 
 <p class="lead">
     CLICS is an online database of synchronic lexical associations ("colexifications")
-    in currently NNN language varieties of the world. Large databases offering lexical
+    in currently
+    <a href="${request.route_url('languages')}">${count_langs} language varieties</a>
+    of the world. Large databases offering lexical
     information on the world's languages are already readily available for research in
     different online sources. However, the information on tendencies of meaning
     associations they enshrine is not easily extractable from these sources themselves.

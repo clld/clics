@@ -2,9 +2,13 @@ from __future__ import unicode_literals
 import sys
 from itertools import chain
 
-from clld.scripts.util import initializedb, Data
+from sqlalchemy import func, desc
 from clld.db.meta import DBSession
 from clld.db.models import common
+from clld.lib.color import qualitative_colors
+from clld.scripts.util import initializedb, Data, bibtex2source
+from clld.lib.bibtex import Database
+
 from clldutils.jsonlib import load
 from clldutils.path import as_unicode
 from csvw.dsv import reader
@@ -48,21 +52,38 @@ def main(args):
         common.Editor(dataset=dataset, contributor=ed, ord=i + 1)
     DBSession.add(dataset)
 
+    for rec in Database.from_file(args.data_file('cldf', 'sources.bib'), lowercase=True):
+        data.add(common.Source, rec.id, _obj=bibtex2source(rec))
+
     colexifications = list(reader(args.data_file('colexifications.csv'), dicts=True))
     wids = set(chain(*[[c['word_a'], c['word_b']] for c in colexifications]))
     wid2pid = {}
+    dss = {d['ID']: d for d in reader(args.data_file('cldf', 'datasets.csv'), dicts=True)}
 
     # load the lexical data
     for d in args.data_file('cldf').iterdir():
-        if not d.is_dir():
+        ds = dss.get(as_unicode(d.name))
+        if not ds:
             continue
-        print(d.name)
-        contrib = common.Contribution(id=as_unicode(d.name), name=as_unicode(d.name))
+        print(ds['ID'])
+        contrib = models.ClicsDataset(
+            id=ds['ID'],
+            name=ds['ID'],
+            description=ds['Note'],
+            author=ds['Author'],
+            provider=ds['Provider'],
+            provider_url=ds['ProviderUrl'])
+
+        for src in ds['Source'].split(','):
+            common.ContributionReference(contribution=contrib, source=data['Source'][src])
 
         for k, v in load(d / 'md.json').items():
+            if k.startswith('_'):
+                continue
             lang = models.Doculect(
                 id=v['identifier'],
                 name=v['name'],
+                contribution=contrib,
                 family_name=v['name'] if v['family'] == v['glottocode'] else v['family'],
                 glottocode=v['glottocode'],
                 macroarea=v['macroarea'][0] if v['macroarea'] else None,
@@ -154,11 +175,16 @@ def prime_cache(args):
         for node in nodes:
             models.GraphConcept(graph=graph, concept=params[node])
         DBSession.add(graph)
-    color_map = {
-        fid[0]: "{0:0{1}X}".format((i + 1) * 10, 3) for i, fid in
-        enumerate(DBSession.execute("select distinct family_name from doculect"))}
+
+    count = func.count(models.Doculect.pk).label('c')
+    families = [
+        r[0] for r in DBSession
+        .query(models.Doculect.family_name, count)
+        .group_by(models.Doculect.family_name)
+        .order_by(desc(count))]
+    families = dict(zip(families, qualitative_colors(len(families))))
     for l in DBSession.query(models.Doculect):
-        l.color = '#' + color_map[l.family_name]
+        l.color = families[l.family_name]
 
 
 if __name__ == '__main__':

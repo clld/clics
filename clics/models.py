@@ -1,33 +1,49 @@
 from zope.interface import implementer
 from sqlalchemy import (
     Column,
-    String,
     Unicode,
     Integer,
-    Boolean,
     ForeignKey,
     UniqueConstraint,
     or_,
     and_,
 )
-from sqlalchemy.orm import relationship, joinedload_all, aliased, joinedload
-from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import relationship, joinedload_all, aliased, joinedload, backref
 
 from clld import interfaces
 from clld.db.meta import Base, CustomModelMixin, PolymorphicBaseMixin, DBSession
 from clld.db.models.common import Language, IdNameDescriptionMixin, Parameter, Value, Contribution
 from clld.lib.color import is_bright
+from clld.web.util.htmllib import HTML
 
 from clics.interfaces import IEdge, IGraph
+
+
+@implementer(interfaces.IValue)
+class Form(CustomModelMixin, Value):
+    pk = Column(Integer, ForeignKey('value.pk'), primary_key=True)
+    source_form = Column(Unicode)
+    source_gloss = Column(Unicode)
 
 
 @implementer(interfaces.IContribution)
 class ClicsDataset(CustomModelMixin, Contribution):
     pk = Column(Integer, ForeignKey('contribution.pk'), primary_key=True)
-    author = Column(Unicode)
-    provider = Column(Unicode)
-    provider_url = Column(Unicode)
+    doi = Column(Unicode)
+    source_citation = Column(Unicode)
+    count_varieties = Column(Integer)
+    count_concepts = Column(Integer)
+
+    def doi_badge(self):
+        if self.doi:
+            return HTML.a(
+                HTML.img(
+                    src="https://zenodo.org/badge/DOI/{0}.svg".format(self.doi),
+                    style="max-width: none !important;",
+                    alt="DOI: {0}".format(self.doi)),
+                href="https://doi.org/{0}".format(self.doi),
+                title="DOI: {0}".format(self.doi))
+        return ''
 
 
 @implementer(interfaces.ILanguage)
@@ -40,6 +56,7 @@ class Doculect(CustomModelMixin, Language):
     color = Column(Unicode)
     contribution_pk = Column(Integer, ForeignKey('contribution.pk'))
     contribution = relationship(Contribution, backref='doculects')
+    count_concepts = Column(Integer)
 
     @staticmethod
     def refine_factory_query(query):
@@ -55,6 +72,8 @@ class Concept(CustomModelMixin, Parameter):
     pk = Column(Integer, ForeignKey('parameter.pk'), primary_key=True)
     category = Column(Unicode)
     semanticfield = Column(Unicode)
+    count_varieties = Column(Integer)
+    count_colexifications = Column(Integer)
 
     @staticmethod
     def refine_factory_query(query):
@@ -62,6 +81,13 @@ class Concept(CustomModelMixin, Parameter):
             joinedload_all(Concept.lo_edges, Edge.colexifications),
             joinedload_all(Concept.hi_edges, Edge.colexifications),
         )
+
+    @property
+    def cluster(self):
+        return DBSession.query(Graph).join(GraphConcept)\
+        .filter(GraphConcept.concept_pk == self.pk)\
+        .filter(Graph.type == 'cluster')\
+        .first()
 
     @property
     def edges(self):
@@ -75,10 +101,6 @@ class Concept(CustomModelMixin, Parameter):
     def neighbors(self):
         return [x.lo_concept for x in self.lo_edges] + \
                [x.hi_concept for x in self.hi_edges]
-
-    @property
-    def graphs(self):
-        return [ga.graph for ga in self.graph_assocs]
 
     def iter_out_edges(self, graph):
         for e, n in self.edges:
@@ -138,6 +160,10 @@ class Edge(Base, PolymorphicBaseMixin, IdNameDescriptionMixin):
 @implementer(IGraph)
 class Graph(Base, PolymorphicBaseMixin, IdNameDescriptionMixin):
     type = Column(Unicode)  # subgraph, infomap, ...
+    count_concepts = Column(Integer)
+    count_edges = Column(Integer)
+    concept_pk = Column(Integer, ForeignKey('concept.pk'))
+    concept = relationship(Concept, backref=backref('subgraph', uselist=False))
 
     @staticmethod
     def refine_factory_query(query):
@@ -149,9 +175,10 @@ class Graph(Base, PolymorphicBaseMixin, IdNameDescriptionMixin):
 
     @property
     def edges(self):
+        cpks = [ca.concept_pk for ca in self.concept_assocs]
         return DBSession.query(Edge) \
-            .filter(Edge.lo_concept.in_(self.concepts)) \
-            .filter(Edge.hi_concept.in_(self.concepts))
+            .filter(Edge.lo_concept_pk.in_(cpks)) \
+            .filter(Edge.hi_concept_pk.in_(cpks))
 
     def edge(self, n1, n2):
         return DBSession.query(Edge) \

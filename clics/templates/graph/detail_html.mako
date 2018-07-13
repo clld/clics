@@ -18,7 +18,7 @@
 </%def>
 
 
-<h2>${_('Graph')} ${ctx.name}</h2>
+<h2>${ctx.type.capitalize()} ${ctx.name}</h2>
 
 ##<ul>
 ##    % for c in ctx.concepts:

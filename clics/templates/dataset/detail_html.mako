@@ -11,10 +11,14 @@
 <h2>${ctx.description}</h2>
 
 <p class="lead">
+    <img src="${req.static_url('clics:static/clics.svg')}" width="100" style="float: left; margin-right: 10px; margin-bottom: 5px; margin-left: 5px;">
     CLICS is an online database of synchronic lexical associations ("colexifications")
     in currently
     <a href="${request.route_url('languages')}">${count_langs} language varieties</a>
-    of the world. Large databases offering lexical
+    of the world.
+</p>
+<p>
+    Large databases offering lexical
     information on the world's languages are already readily available for research in
     different online sources. However, the information on tendencies of meaning
     associations they enshrine is not easily extractable from these sources themselves.

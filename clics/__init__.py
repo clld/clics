@@ -15,6 +15,8 @@ _('Language')
 _('Languages')
 _('Contribution')
 _('Contributions')
+_('Edge')
+_('Edges')
 
 
 class ClicsMapMarker(MapMarker):

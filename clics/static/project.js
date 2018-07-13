@@ -91,7 +91,7 @@ CLICS.Graph = function (url, world_json, options) {
         var labelAnchorLinks = [];
 
         for (i = 0; i < data.nodes.length; i++) {
-            node = {label: data.nodes[i].Gloss, OutEdge: data.nodes[i].OutEdge};
+            node = {id: data.nodes[i].ID, label: data.nodes[i].Gloss, OutEdge: data.nodes[i].OutEdge};
             nodes.push(node);
             labelAnchors.push({node: node});
             labelAnchors.push({node: node});
@@ -295,6 +295,11 @@ CLICS.Graph = function (url, world_json, options) {
             .style('cursor', function (d, i) {
                 return d.node.OutEdge.length > 0 ? "pointer" : "arrow";
             })
+            .on("click", function(d, i) {
+                if (d.node.OutEdge.length > 0) {
+                    window.location = '/graphs/subgraph_' + d.node.id;
+                }
+            })
             .on('mouseover', function (d, i) {
                 d3.selectAll('.link').style('stroke', '#CCC').style('stroke-opacity', opacity / 100);
                 d3.select(this).style('fill', 'DarkBlue').style('stroke-opacity', 1);
@@ -344,7 +349,9 @@ CLICS.Graph = function (url, world_json, options) {
                 for (var j = 0; j < d.node.OutEdge.length; j++) {
                     outstring += d.node.OutEdge[j][0] + '\n';
                 }
-                return outstring;
+                if (d.node.OutEdge.length > 0) {
+                    return 'click to navigate to subgraph centered at ' + d.node.label;
+                }
             });
 
         var updateLink = function () {

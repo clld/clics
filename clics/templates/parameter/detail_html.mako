@@ -17,19 +17,19 @@ ${request.get_datatable('values', h.models.Value, parameter=ctx).render()}
 
 <%def name="sidebar()">
     <div class="well well-small">
-        <h5>Colexifications:</h5>
-        <table class="table table-condensed">
+        <h4>Colexified concepts:</h4>
+        <table class="table table-condensed table-nonfluid">
             <thead>
                 <tr>
-                    <th>Concept</th>
                     <th style="text-align: right">Links</th>
+                    <th>Concept</th>
                 </tr>
             </thead>
             <tbody>
                 % for e, n in ctx.edges:
                     <tr>
-                        <td>${h.link(request, e, label=n.name)}</td>
                         <td class="right">${len(e.colexifications)}</td>
+                        <td>${h.link(request, e, label=n.name)}</td>
                     </tr>
                 % endfor
             </tbody>

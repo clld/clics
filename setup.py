@@ -23,6 +23,7 @@ setup(
         'clld>=4.1.0',
         'clld-glottologfamily-plugin',
         'clldmpg',
+        'pyclics',
         'sqlalchemy',
         'waitress',
     ],

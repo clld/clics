@@ -15,7 +15,10 @@ from clldutils.jsonlib import load
 from clldutils.path import Path
 from pyconcepticon.api import Concepticon
 
-from pyclics.api import Clics
+try:
+    from pyclics.api import Clics
+except ImportError:
+    Clics = None
 
 import clics
 from clics import models

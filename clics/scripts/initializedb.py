@@ -221,12 +221,23 @@ def prime_cache(args):
     for v in DBSession.query(common.Language).options(joinedload(common.Language.valuesets)):
         v.count_concepts = len(v.valuesets)
 
+    lang_counts = {
+        r[0]: (r[1], r[2]) for r in DBSession.execute("""\
+select
+    vs.contribution_pk, count(distinct l.glottocode), count(distinct l.family_name)
+from
+    valueset as vs, doculect as l
+where
+    vs.language_pk = l.pk
+group by
+    vs.contribution_pk""")}
     concept_counts = {
         r[0]: r[1] for r in DBSession.execute(
         "select contribution_pk, count(distinct parameter_pk) from valueset group by contribution_pk")}
     for ds in DBSession.query(models.ClicsDataset).options(joinedload(models.ClicsDataset.doculects)):
         ds.count_varieties = len(ds.doculects)
         ds.count_concepts = concept_counts[ds.pk]
+        ds.count_glottocodes, ds.count_families = lang_counts[ds.pk]
 
 
 if __name__ == '__main__':

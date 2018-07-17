@@ -33,6 +33,8 @@ class ClicsDataset(CustomModelMixin, Contribution):
     source_citation = Column(Unicode)
     count_varieties = Column(Integer)
     count_concepts = Column(Integer)
+    count_glottocodes = Column(Integer)
+    count_families = Column(Integer)
 
     def doi_badge(self):
         if self.doi:

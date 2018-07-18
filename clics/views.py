@@ -51,5 +51,5 @@ def about(req):
         'top_ten': top_ten,
         'datasets': datasets,
         'wheel': Graph.get('subgraph_710'),
-        'say': Graph.get('infomap_2_SPEAK')
+        'say': Graph.get('infomap_4_SPEAK')
     }

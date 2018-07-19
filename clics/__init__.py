@@ -1,8 +1,12 @@
+from sqlalchemy.orm import joinedload
 from pyramid.config import Configurator
 
-from clld.interfaces import IMapMarker, IValue, IValueSet, ILanguage
+from clld.interfaces import IMapMarker, IValue, IValueSet, ILanguage, ICtxFactoryQuery
 from clld.web.icon import MapMarker
 from clld.lib import svg
+from clld.web.app import CtxFactoryQuery
+from clld.db.models import common
+
 # we must make sure custom models are known at database initialization!
 from clics import models
 from clics.interfaces import IEdge, IGraph
@@ -17,6 +21,21 @@ _('Contribution')
 _('Contributions')
 _('Edge')
 _('Edges')
+
+
+class ClicsCtxFactoryQuery(CtxFactoryQuery):
+    def refined_query(self, query, model, req):
+        """To be overridden.
+
+        Derived classes may override this method to add model-specific query
+        refinements of their own.
+        """
+        if model == common.Contribution:
+            query = query.options(
+                joinedload(models.ClicsDataset.doculects),
+                joinedload(common.Contribution.data),
+            )
+        return query
 
 
 class ClicsMapMarker(MapMarker):
@@ -35,6 +54,9 @@ class ClicsMapMarker(MapMarker):
         return super(ClicsMapMarker, self).__call__(ctx, req)
 
 
+
+
+
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
@@ -43,4 +65,5 @@ def main(global_config, **settings):
     config.register_resource('graph', models.Graph, IGraph, with_index=True)
     config.register_resource('edge', models.Edge, IEdge, with_index=True)
     config.registry.registerUtility(ClicsMapMarker(), IMapMarker)
+    config.registry.registerUtility(ClicsCtxFactoryQuery(), ICtxFactoryQuery)
     return config.make_wsgi_app()

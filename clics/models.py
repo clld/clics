@@ -36,6 +36,16 @@ class ClicsDataset(CustomModelMixin, Contribution):
     count_glottocodes = Column(Integer)
     count_families = Column(Integer)
 
+    def conceptlist_link(self, req):
+        if 'cl_url' in self.jsondata:
+            return HTML.a(
+                HTML.img(
+                    src=req.static_url('clics:static/concepticon.png'),
+                    width='20'),
+                title='concept list at Concepticon',
+                href=self.jsondata['cl_url'])
+        return ''
+
     def doi_badge(self):
         if self.doi:
             return HTML.a(

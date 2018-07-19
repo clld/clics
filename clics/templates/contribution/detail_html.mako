@@ -18,6 +18,14 @@
         ##    % endfor
         ##</ul>
     </%util:well>
+        % if 'cl_url' in ctx.jsondata:
+            <%util:well title="Concept list">
+                <p>
+                    The concept list for this dataset is available at Concepticon as
+                    <a href="${ctx.jsondata['cl_url']}">${ctx.jsondata['cl_url'].split('/')[-1]}</a>
+                </p>
+            </%util:well>
+        % endif
 </%def>
 
 <h2>${_('Contribution')} ${ctx.name}</h2>

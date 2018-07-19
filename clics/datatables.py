@@ -70,6 +70,13 @@ class DoiCol(Col):
         return item.doi_badge()
 
 
+class ConceptListCol(Col):
+    __kw__ = dict(bSearchable=False, bSortable=False)
+
+    def format(self, item):
+        return item.conceptlist_link(self.dt.req)
+
+
 class Datasets(Contributions):
     def col_defs(self):
         return [
@@ -77,6 +84,7 @@ class Datasets(Contributions):
             LinkCol(self, 'name'),
             Col(self, 'count_varieties', model_col=ClicsDataset.count_varieties, sTitle='# varieties', input_size='mini'),
             Col(self, 'count_concepts', model_col=ClicsDataset.count_concepts, sTitle='# concepts', input_size='mini'),
+            ConceptListCol(self, 'concept_list', sTitle='Concept list'),
             Col(self, 'source_citation', model_col=ClicsDataset.source_citation),
         ]
 

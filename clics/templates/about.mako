@@ -28,6 +28,7 @@
     <tr>
         <th>ID</th>
         <th>Dataset</th>
+        <th>Concept list</th>
         <th>Glosses</th>
         <th>Concepticon</th>
         <th>Varieties</th>
@@ -40,6 +41,7 @@
             <tr>
                 <td>${h.link(request, ds, label=ds.id.replace('lexibank-', ''))}</td>
                 <td>${h.link(request, ds)}</td>
+                <td>${ds.conceptlist_link(request)|n}</td>
                 <td class="right">${g}</td>
                 <td class="right">${ds.count_concepts}</td>
                 <td class="right">${ds.count_varieties}</td>

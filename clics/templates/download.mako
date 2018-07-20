@@ -20,7 +20,7 @@
 </p>
 <p>
     As long as the
-    ${h.external_link('https://pypi.org', label='Python Package Index (PyPI)')}} and
+    ${h.external_link('https://pypi.org', label='Python Package Index (PyPI)')} and
     ${h.external_link('https://github.com', label='GitHub')} are around, though,
     installing the software from PiPI and retrieving the datasets from GitHub - as described
     ${h.external_link('https://github.com/clics/clics2/blob/master/README.md', label='here')}

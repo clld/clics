@@ -72,13 +72,18 @@ def main(args):
             api.db.fetchall("select dataset_id, key, value from datasetmeta order by dataset_id"),
             lambda r: r[0]):
         meta = {r[1]: r[2] for r in meta}
+        jsondata = {}
+        if 'dc:format' in meta:
+            jsondata['cl_url'] = meta['dc:format']
         data.add(
             models.ClicsDataset,
             dsid,
             id=dsid,
             name=meta['dc:title'],
             doi=dois.get(dsid),
-            source_citation=meta['dc:bibliographicCitation'])
+            source_citation=meta['dc:bibliographicCitation'],
+            jsondata=jsondata,
+        )
 
     for c in sorted(api.db.iter_concepts(), key=lambda c_: int(c_.id)):
         data.add(

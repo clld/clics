@@ -1,13 +1,16 @@
-from sqlalchemy.orm import joinedload
-from clld.web.datatables.base import LinkCol, LinkToMapCol, Col, DataTable, DetailsRowLinkCol
-from clld.web.datatables.language import Languages
-from clld.web.datatables.contribution import Contributions
-from clld.web.datatables.parameter import Parameters
-from clld.web.datatables.value import Values
-from clld.web.util.htmllib import HTML
-from clld.web.util.helpers import map_marker_img, external_link, linked_references, link
 from clld.db.models.common import Contribution, Parameter
 from clld.db.util import get_distinct_values
+from clld.web.datatables.base import LinkCol, LinkToMapCol, Col, DataTable, \
+    DetailsRowLinkCol
+from clld.web.datatables.contribution import Contributions
+from clld.web.datatables.language import Languages
+from clld.web.datatables.parameter import Parameters
+from clld.web.datatables.value import Values
+from clld.web.util.concepticon import link as make_concepticon_link
+from clld.web.util.helpers import map_marker_img, external_link, \
+    linked_references, link
+from clld.web.util.htmllib import HTML
+from sqlalchemy.orm import joinedload
 
 from clics.models import Doculect, ClicsDataset, Graph, Concept, Form
 
@@ -126,11 +129,7 @@ class ConcepticonCol(Col):
     __kw__ = {'bSearchable': False, 'bSortable': False}
 
     def format(self, item):
-        return HTML.a(
-            HTML.img(src=self.dt.req.static_url('clics:static/concepticon.png'), width=20),
-            href='http://concepticon.clld.org/parameters/{0}'.format(item.id),
-            title='View conceptset at Concepticon',
-        )
+        return make_concepticon_link(self.dt.req, item.id)
 
 
 class Concepts(Parameters):
@@ -139,7 +138,6 @@ class Concepts(Parameters):
             DetailsRowLinkCol(self, '#'),
             LinkCol(self, 'name'),
             ConcepticonCol(self, '#', sTitle=''),
-            # FIXME: link to concepticon
             Col(self, 'count_varieties', model_col=Concept.count_varieties, sTitle='# varieties'),
             Col(self, 'count_colexifications', model_col=Concept.count_colexifications, sTitle='# colexifications'),
             ClusterCol(self, 'cluster'),

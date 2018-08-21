@@ -22,7 +22,7 @@
             <%util:well title="Concept list">
                 <p>
                     The concept list for this dataset is available at Concepticon as
-                    <a href="${ctx.jsondata['cl_url']}">${ctx.jsondata['cl_url'].split('/')[-1]}</a>
+                    ${ctx.conceptlist_link(request, label=ctx.jsondata['cl_url'].split('/')[-1],)}.
                 </p>
             </%util:well>
         % endif

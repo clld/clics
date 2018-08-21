@@ -15,6 +15,7 @@ from clld.db.meta import Base, CustomModelMixin, PolymorphicBaseMixin, DBSession
 from clld.db.models.common import Language, IdNameDescriptionMixin, Parameter, Value, Contribution
 from clld.lib.color import is_bright
 from clld.web.util.htmllib import HTML
+from clld.web.util import concepticon
 
 from clics.interfaces import IEdge, IGraph
 
@@ -38,12 +39,8 @@ class ClicsDataset(CustomModelMixin, Contribution):
 
     def conceptlist_link(self, req):
         if 'cl_url' in self.jsondata:
-            return HTML.a(
-                HTML.img(
-                    src=req.static_url('clics:static/concepticon.png'),
-                    width='20'),
-                title='concept list at Concepticon',
-                href=self.jsondata['cl_url'])
+            cl_id = self.jsondata['cl_url'].split('/')[-1]
+            return concepticon.link(req, cl_id, obj_type='ConceptList')
         return ''
 
     def doi_badge(self):

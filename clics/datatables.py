@@ -6,7 +6,7 @@ from clld.web.datatables.contribution import Contributions
 from clld.web.datatables.language import Languages
 from clld.web.datatables.parameter import Parameters
 from clld.web.datatables.value import Values
-from clld.web.util.concepticon import link as make_concepticon_link
+from clld.web.util import concepticon
 from clld.web.util.helpers import map_marker_img, external_link, \
     linked_references, link
 from clld.web.util.htmllib import HTML
@@ -129,7 +129,7 @@ class ConcepticonCol(Col):
     __kw__ = {'bSearchable': False, 'bSortable': False}
 
     def format(self, item):
-        return make_concepticon_link(self.dt.req, item.id)
+        return concepticon.link(self.dt.req, item.id)
 
 
 class Concepts(Parameters):

@@ -12,20 +12,23 @@
 
 <p class="lead">
     <img src="${req.static_url('clics:static/clics.svg')}" width="100" style="float: left; margin-right: 10px; margin-bottom: 5px; margin-left: 5px;">
-    CLICS is an online database of synchronic lexical associations ("colexifications")
+    ${req.dataset.name} is an online database of colexifications (polysemiesor homophonies)
     in currently
     <a href="${request.route_url('languages')}">${count_langs} language varieties</a>
     of the world.
 </p>
 <p>
-    Large databases offering lexical
-    information on the world's languages are already readily available for research in
-    different online sources. However, the information on tendencies of meaning
-    associations they enshrine is not easily extractable from these sources themselves.
-    This is why CLICS was created. It is designed to serve as a data source for work in
-    lexical typology, diachronic semantics, and research in cognitive science that focuses
-    on natural language semantics from the viewpoint of cross-linguistic diversity.
-    Furthermore, CLICS can be used as a helpful tool to assess the plausibility of
-    semantic connections between possible cognates in the establishment of genetic
-    relations between languages.
+The original Database of Cross-Linguistic Colexifications (CLICS), has
+established a computer-assisted framework for the interactive
+representation of cross-linguistic colexification patterns. In its
+current form, it has proven to be a useful tool for various kinds of
+investigation into cross-linguistic semantic associations, ranging from
+studies on semantic change, patterns of conceptualization, and
+linguistic paleontology. But CLICS has also been criticized for obvious
+shortcomings. Building on recent standardization efforts reflected in
+the CLDF initiative and novel approaches for fast, efficient, and
+reliable data aggregation, ${req.dataset.name} is a new database of cross-linguistic
+colexifications, which supersedes the original CLICS database in terms
+of coverage and offers a much more principled procedure for the
+creation, curation and aggregation of datasets.
 </p>

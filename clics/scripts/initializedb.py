@@ -1,3 +1,4 @@
+# coding: utf8
 from __future__ import unicode_literals
 import sys
 from itertools import chain, groupby
@@ -43,7 +44,7 @@ def main(args):
 
     dataset = common.Dataset(
         id=clics.__name__,
-        name="CLICS",
+        name="CLICS²",
         description="Database of Cross-Linguistic Colexifications",
         publisher_name="Max Planck Institute for the Science of Human History",
         publisher_place="Jena",

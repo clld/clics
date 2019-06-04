@@ -9,9 +9,9 @@ import transaction
 from sqlalchemy.orm import joinedload
 from clld.db.meta import DBSession
 from clld.db.models import common
-from clld.lib.color import qualitative_colors
 from clld.scripts.util import initializedb, Data, bibtex2source
 
+from clldutils.color import qualitative_colors
 from clldutils.jsonlib import load
 from clldutils.path import Path
 from pyconcepticon.api import Concepticon

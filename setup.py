@@ -20,7 +20,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'clld>=4.3.0',
+        'clld>=4.7.0',
         'clld-glottologfamily-plugin',
         'clldmpg',
         'sqlalchemy',

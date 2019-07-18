@@ -94,10 +94,10 @@ class Concept(CustomModelMixin, Parameter):
 
     @property
     def cluster(self):
-        return DBSession.query(Graph).join(GraphConcept)\
-        .filter(GraphConcept.concept_pk == self.pk)\
-        .filter(Graph.type == 'cluster')\
-        .first()
+        return DBSession.query(Graph).join(GraphConcept) \
+            .filter(GraphConcept.concept_pk == self.pk) \
+            .filter(Graph.type == 'infomap') \
+            .first()
 
     @property
     def edges(self):

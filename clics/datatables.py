@@ -140,7 +140,7 @@ class Concepts(Parameters):
             ConcepticonCol(self, '#', sTitle=''),
             Col(self, 'count_varieties', model_col=Concept.count_varieties, sTitle='# varieties'),
             Col(self, 'count_colexifications', model_col=Concept.count_colexifications, sTitle='# colexifications'),
-            ClusterCol(self, 'cluster'),
+            ClusterCol(self, 'infomap'),
             SubgraphCol(self, 'subgraph'),
         ]
 

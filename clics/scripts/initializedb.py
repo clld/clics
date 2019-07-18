@@ -1,5 +1,3 @@
-# coding: utf8
-from __future__ import unicode_literals
 import sys
 from itertools import chain, groupby
 from collections import Counter
@@ -16,10 +14,8 @@ from clldutils.jsonlib import load
 from clldutils.path import Path
 from pyconcepticon.api import Concepticon
 
-try:
-    from pyclics.api import Clics
-except ImportError:
-    Clics = None
+from pyclics.api import Clics
+from pyclics.util import iter_subgraphs
 
 import clics
 from clics import models
@@ -37,19 +33,19 @@ def ids(wid1, wid2, wid2pid):
 
 def main(args):
     data = Data()
-    api = Clics(Path(clics.__file__).parent.parent.parent / 'clics2')
+    api = Clics(Path(clics.__file__).parent.parent.parent / 'clics3')
     concepticon = Concepticon(
         Path(clics.__file__).parent.parent.parent.parent / 'concepticon' / 'concepticon-data')
     concept_definitions = {k: v.definition for k, v in concepticon.conceptsets.items()}
 
     dataset = common.Dataset(
         id=clics.__name__,
-        name="CLICS²",
+        name="CLICS³",
         description="Database of Cross-Linguistic Colexifications",
         publisher_name="Max Planck Institute for the Science of Human History",
         publisher_place="Jena",
         publisher_url="http://www.shh.mpg.de",
-        license="http://creativecommons.org/licenses/by/4.0/",
+        license="https://creativecommons.org/licenses/by/4.0/",
         domain='clics.clld.org',
         contact='clics@shh.mpg.de',
         jsondata={
@@ -58,10 +54,9 @@ def main(args):
 
     for i, (id_, name) in enumerate([
         ('list', 'Johann-Mattis List'),
-        ('greenhill', 'Simon Greenhill'),
-        ('anderson', 'Cormac Anderson'),
-        ('mayer', 'Thomas Mayer'),
+        ('rzymski', 'Christoph Rzymski'),
         ('tresoldi', 'Tiago Tresoldi'),
+        ('greenhill', 'Simon Greenhill'),
         ('forkel', 'Robert Forkel'),
     ]):
         ed = data.add(common.Contributor, id_, id=id_, name=name)
@@ -76,6 +71,12 @@ def main(args):
         jsondata = {}
         if 'dc:format' in meta:
             jsondata['cl_url'] = meta['dc:format']
+        if 'dc:bibliographicCitation' not in meta:
+            print(dsid, 'missing citation')
+            assert dsid == 'lexirumah'
+            meta['dc:bibliographicCitation'] = \
+                "Gereon Kaiping, Owen Edwards, & Marian Klamer. (2019). LexiRumah 2.2.3 " \
+                "(Version v2.2.3) [Data set]. Zenodo. http://doi.org/10.5281/zenodo.3244244"
         data.add(
             models.ClicsDataset,
             dsid,
@@ -190,21 +191,23 @@ def main(args):
                 models.GraphConcept(graph=graph, concept=c_by_id[node])
             DBSession.add(graph)
 
-    for fname in tqdm(api.path('app', 'cluster').glob('*.json'), desc='loading cluster graphs'):
-        make_graph(
-            fname.stem,
-            fname.stem.split('_', 2)[2],
-            'cluster',
-            [n['ID'] for n in load(fname)['nodes']])
+    for d in api.path('app', 'cluster').iterdir():
+        if d.is_dir() and d.name != 'subgraph':
+            for fname in tqdm(d.glob('*.json'), desc='loading cluster graphs'):
+                make_graph(
+                    fname.stem,
+                    fname.stem.split('_', 2)[2],
+                    d.name,
+                    [n['ID'] for n in load(fname)['nodes']])
 
-    graph = api.load_graph('subgraph', threshold=3, edgefilter='families')
-    for node, data in tqdm(graph.nodes(data=True), desc='loading subgraphs'):
+    for n, sg in iter_subgraphs(api.load_graph('network', 3, 'families')):
         make_graph(
-            'subgraph_{0}'.format(node),
-            '{0}'.format(data['Gloss']),
+            'subgraph_{0}'.format(n),
+            'Subgraph {0}'.format(c_by_id[n].name),
             'subgraph',
-            data['subgraph'],
-            concept=c_by_id[node])
+            sg,
+            concept=c_by_id[n],
+        )
 
     return
 

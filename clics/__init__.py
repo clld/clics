@@ -3,7 +3,7 @@ from pyramid.config import Configurator
 
 from clld.interfaces import IMapMarker, IValue, IValueSet, ILanguage, ICtxFactoryQuery
 from clld.web.icon import MapMarker
-from clld.lib import svg
+from clldutils import svg
 from clld.web.app import CtxFactoryQuery
 from clld.db.models import common
 

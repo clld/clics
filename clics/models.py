@@ -1,3 +1,5 @@
+from ast import literal_eval
+
 from zope.interface import implementer
 from sqlalchemy import (
     Column,
@@ -13,7 +15,7 @@ from sqlalchemy.orm import relationship, joinedload_all, aliased, joinedload, ba
 from clld import interfaces
 from clld.db.meta import Base, CustomModelMixin, PolymorphicBaseMixin, DBSession
 from clld.db.models.common import Language, IdNameDescriptionMixin, Parameter, Value, Contribution
-from clld.lib.color import is_bright
+from clldutils.color import is_bright
 from clld.web.util.htmllib import HTML
 from clld.web.util import concepticon
 
@@ -37,12 +39,15 @@ class ClicsDataset(CustomModelMixin, Contribution):
     count_glottocodes = Column(Integer)
     count_families = Column(Integer)
 
-    def conceptlist_link(self, req, label=None):
+    def conceptlist_link(self, req):
         if 'cl_url' in self.jsondata:
-            cl_id = self.jsondata['cl_url'].split('/')[-1]
+            elements = literal_eval(self.jsondata['cl_url'])[0]
+            cl_id = elements.split('/')[-1]
+            label = cl_id
             return concepticon.link(req, cl_id, obj_type='ConceptList',
                                     label=label)
-        return ''
+        else:
+            return ''
 
     def doi_badge(self):
         if self.doi:

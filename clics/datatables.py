@@ -1,4 +1,4 @@
-from clld.db.models.common import Contribution, Parameter
+from clld.db.models.common import Contribution, Parameter, Language
 from clld.db.util import get_distinct_values
 from clld.web.datatables.base import LinkCol, LinkToMapCol, Col, DataTable, \
     DetailsRowLinkCol
@@ -149,12 +149,24 @@ class Forms(Values):
     def col_defs(self):
         res = [Col(self, 'name', sTitle='CLICS Form')]
         if self.language:
-            res.append(LinkCol(self,
+            res.append(LinkCol(
+                self,
                 'parameter',
                 sTitle='Concept',
                 model_col=Parameter.name,
-                get_object=lambda i: i.valueset.parameter)
-            )
+                get_object=lambda i: i.valueset.parameter,
+            ))
+        if self.parameter:
+            res.extend([
+                LinkCol(
+                    self,
+                    'variety',
+                    sTitle='Variety',
+                    model_col=Language.name,
+                    get_object=lambda i: i.valueset.language,
+                ),
+                LinkToMapCol(self, '#', get_object=lambda i: i.valueset.language),
+            ])
         return res + [
             Col(self, 'source_form', sTitle='Form in source', model_col=Form.source_form),
             Col(self, 'source_gloss', sTitle='Gloss in source', model_col=Form.source_gloss),

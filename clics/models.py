@@ -13,7 +13,7 @@ from sqlalchemy.orm import relationship, joinedload_all, aliased, joinedload, ba
 from clld import interfaces
 from clld.db.meta import Base, CustomModelMixin, PolymorphicBaseMixin, DBSession
 from clld.db.models.common import Language, IdNameDescriptionMixin, Parameter, Value, Contribution
-from clld.lib.color import is_bright
+from clldutils.color import is_bright
 from clld.web.util.htmllib import HTML
 from clld.web.util import concepticon
 

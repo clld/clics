@@ -3,7 +3,7 @@ from pyramid.view import view_config
 from clld.db.meta import DBSession
 from clld.db.models.common import Parameter, Contribution
 
-from clics.models import Graph
+from clics.models import Graph, GraphConcept, Concept
 
 
 @view_config(renderer='about.mako')
@@ -51,5 +51,8 @@ def about(req):
         'top_ten': top_ten,
         'datasets': datasets,
         'wheel': Graph.get('subgraph_710'),
-        'say': Graph.get('infomap_4_SPEAK')
+        'say': DBSession.query(Graph).join(GraphConcept).join(Concept)\
+            .filter(Concept.name == 'SPEAK')\
+            .filter(Graph.type == 'infomap')\
+            .first()
     }

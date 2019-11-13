@@ -20,7 +20,8 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'clld>=4.7.0',
+        'clldutils>=3.3',
+        'clld>=5.1.1',
         'clld-glottologfamily-plugin',
         'clldmpg',
         'sqlalchemy',
@@ -33,7 +34,7 @@ setup(
             'pydplace',
         ],
         'test': [
-            'psycopg2',
+            'psycopg2-binary',
             'mock',
             'pytest>=3.1',
             'pytest-clld>=0.4',
@@ -45,7 +46,12 @@ setup(
         ],
     },
     test_suite="clics",
-    entry_points="""\
-[paste.app_factory]
-main = clics:main
-""")
+    entry_points={
+        'console_scripts': [
+            'clics-app=clics.__main__:main',
+        ],
+        'paste.app_factory': [
+            'main=clics:main',
+        ]
+    },
+)

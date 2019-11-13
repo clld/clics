@@ -1,5 +1,3 @@
-import sys
-from itertools import chain, groupby
 from collections import Counter
 
 from tqdm import tqdm
@@ -7,19 +5,16 @@ import transaction
 from sqlalchemy.orm import joinedload
 from clld.db.meta import DBSession
 from clld.db.models import common
-from clld.scripts.util import initializedb, Data, bibtex2source
+from clld.scripts.util import Data
 
 from clldutils.color import qualitative_colors
 from clldutils.jsonlib import load
-from clldutils.path import Path
-from pyconcepticon.api import Concepticon
 
-from pyclics.api import Clics
+from pyclics.zenodo import iter_records
 from pyclics.util import iter_subgraphs
 
 import clics
 from clics import models
-from clics.scripts.util import iter_dois
 
 
 def ids(wid1, wid2, wid2pid):
@@ -33,10 +28,18 @@ def ids(wid1, wid2, wid2pid):
 
 def main(args):
     data = Data()
-    api = Clics(Path(clics.__file__).parent.parent.parent / 'clics3')
-    concepticon = Concepticon(
-        Path(clics.__file__).parent.parent.parent.parent / 'concepticon' / 'concepticon-data')
-    concept_definitions = {k: v.definition for k, v in concepticon.conceptsets.items()}
+    api = args.repos
+    concept_definitions = {k: v.definition for k, v in args.concepticon.conceptsets.items()}
+    zenodo = {(rec.dataset_id, rec.tag): rec.doi for rec in iter_records() if rec.doi}
+    # Looking up dataset versions is somewhat messy, because we cannot blindly trust the
+    # `version` column in the database.
+    datasetspec = {}
+    for line in api.repos.joinpath('datasets.md').read_text(encoding='utf8').splitlines():
+        line = line.strip()
+        if line.startswith('|'):
+            row = [c.strip() for c in line[1:-1].split('|')]
+            assert len(row) == 5
+            datasetspec[row[-1]] = row[-3]
 
     dataset = common.Dataset(
         id=clics.__name__,
@@ -49,6 +52,7 @@ def main(args):
         domain='clics.clld.org',
         contact='clics@shh.mpg.de',
         jsondata={
+            'doi': args.doi,
             'license_icon': 'cc-by.png',
             'license_name': 'Creative Commons Attribution 4.0 International License'})
 
@@ -63,11 +67,8 @@ def main(args):
         common.Editor(dataset=dataset, contributor=ed, ord=i + 1)
     DBSession.add(dataset)
 
-    dois = dict(iter_dois())
-    for dsid, meta in groupby(
-            api.db.fetchall("select dataset_id, key, value from datasetmeta order by dataset_id"),
-            lambda r: r[0]):
-        meta = {r[1]: r[2] for r in meta}
+    for dsid, meta in api.db.datasetmeta.items():
+        meta = {r[0]: r[1] for r in meta}
         jsondata = {}
         if 'dc:format' in meta:
             jsondata['cl_url'] = meta['dc:format']
@@ -75,14 +76,14 @@ def main(args):
             print(dsid, 'missing citation')
             assert dsid == 'lexirumah'
             meta['dc:bibliographicCitation'] = \
-                "Gereon Kaiping, Owen Edwards, & Marian Klamer. (2019). LexiRumah 2.2.3 " \
-                "(Version v2.2.3) [Data set]. Zenodo. http://doi.org/10.5281/zenodo.3244244"
+                "Gereon Kaiping, Owen Edwards, & Marian Klamer. (2019). LexiRumah 3.0.0 " \
+                "(Version v3.0.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.3537977"
         data.add(
             models.ClicsDataset,
             dsid,
             id=dsid,
             name=meta['dc:title'],
-            doi=dois.get(dsid),
+            doi=zenodo[dsid, datasetspec[dsid]],
             source_citation=meta['dc:bibliographicCitation'],
             jsondata=jsondata,
         )
@@ -211,12 +212,6 @@ def main(args):
 
     return
 
-    for rec in Database.from_file(args.data_file('cldf', 'sources.bib'), lowercase=True):
-        data.add(common.Source, rec.id, _obj=bibtex2source(rec))
-
-    for src in ds['Source'].split(','):
-        common.ContributionReference(contribution=contrib, source=data['Source'][src])
-
 
 def prime_cache(args):
     """If data needs to be denormalized for lookup, do that here.
@@ -247,8 +242,3 @@ group by
         ds.count_varieties = len(ds.doculects)
         ds.count_concepts = concept_counts[ds.pk]
         ds.count_glottocodes, ds.count_families = lang_counts[ds.pk]
-
-
-if __name__ == '__main__':
-    initializedb(create=main, prime_cache=prime_cache)
-    sys.exit(0)

@@ -18,10 +18,10 @@
         ##    % endfor
         ##</ul>
     </%util:well>
-        % if 'cl_url' in ctx.jsondata:
-            <%util:well title="Concept list">
+        % if 'conceptlists' in ctx.jsondata:
+            <%util:well title="Conceptlists">
                 <p>
-                    The concept list for this dataset is available at Concepticon as
+                    The concept lists for this dataset are available at Concepticon as
                     ${ctx.conceptlist_link(request)}.
                 </p>
             </%util:well>

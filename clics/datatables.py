@@ -145,6 +145,16 @@ class Concepts(Parameters):
         ]
 
 
+class FamilyCol2(Col):
+    __kw__ = {'sType': 'html'}
+
+    def format(self, item):
+        return HTML.div(
+            item.valueset.language.family_name,
+            style="background-color: {0.color}; color: {0.fontcolor}".format(
+                item.valueset.language))
+
+
 class Forms(Values):
     def col_defs(self):
         res = [Col(self, 'name', sTitle='CLICS Form')]
@@ -166,11 +176,27 @@ class Forms(Values):
                     get_object=lambda i: i.valueset.language,
                 ),
                 LinkToMapCol(self, '#', get_object=lambda i: i.valueset.language),
+                FamilyCol2(
+                    self,
+                    'family',
+                    model_col=Doculect.family_name,
+                    get_object=lambda i: i.valueset.language,
+                ),
             ])
-        return res + [
+        res += [
             Col(self, 'source_form', sTitle='Form in source', model_col=Form.source_form),
             Col(self, 'source_gloss', sTitle='Gloss in source', model_col=Form.source_gloss),
         ]
+        if self.parameter:
+            res.append(LinkCol(
+                self,
+                'dataset',
+                model_col=Contribution.name,
+                get_object=lambda i: i.valueset.contribution,
+                bSearchable=False,
+                bSortable=False,
+            ))
+        return res
 
 
 def includeme(config):

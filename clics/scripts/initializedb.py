@@ -71,7 +71,12 @@ def main(args):
         meta = {r[0]: r[1] for r in meta}
         jsondata = {}
         if 'dc:format' in meta:
-            jsondata['cl_url'] = meta['dc:format']
+            cls = meta['dc:format']
+            if cls.startswith('['):
+                cls = eval(cls)
+            else:
+                cls = [cls]
+            jsondata['conceptlists'] = [cl.split('/')[-1] for cl in cls]
         if 'dc:bibliographicCitation' not in meta:
             print(dsid, 'missing citation')
             assert dsid == 'lexirumah'

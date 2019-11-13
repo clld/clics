@@ -3,8 +3,9 @@
 
 <%def name="sidebar()">
     <%util:well title="Cite">
-        ${h.newline2br(h.text_citation(request, ctx))|n}
-        ${h.cite_button(request, ctx)}
+        Rzymski, Christoph and Tresoldi, Tiago et al. 2019.
+        The Database of Cross-Linguistic Colexifications, reproducible analysis of cross- linguistic polysemies.
+        <a href="https://doi.org/10.17613/5awv-6w15">DOI: 10.17613/5awv-6w15</a>
     </%util:well>
 </%def>
 

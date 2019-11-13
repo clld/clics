@@ -20,6 +20,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
+        'pyclics>=3.0.1',
         'clldutils>=3.3',
         'clld>=5.1.1',
         'clld-glottologfamily-plugin',

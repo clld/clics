@@ -10,7 +10,8 @@ import pytest
         ('get_html', '/download'),
         ('get_html', '/contributions/northeuralex'),
         ('get_dt', '/contributions'),
-        ('get_dt', '/contributions?sSearch_1=madang')
+        ('get_dt', '/contributions?sSearch_1=madang'),
+        ('get_json', '/parameters/5.geojson'),
     ])
 def test_pages(app, method, path):
     getattr(app, method)(path)

@@ -30,6 +30,7 @@ setup(
     ],
     extras_require={
         'dev': [
+            'pyclics>=3.0.1',
             'flake8',
             'tox',
             'pydplace',

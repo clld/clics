@@ -42,7 +42,7 @@
     to more than double the amount of data aggregated in the database.
 </p>
 
-<div id="visualization" style="padding-top: 0; margin-top: -50px;">
+<div id="visualization" style="padding-top: 0; margin-top: 0px;">
     <div id="vis" style="padding-top: 0;"></div>
 </div>
 

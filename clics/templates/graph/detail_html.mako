@@ -18,7 +18,7 @@
 </%def>
 
 
-<h2>${ctx.type.capitalize()} ${ctx.name}</h2>
+<h2>${ctx.type.capitalize() if ctx.type != 'subgraph' else ''} ${ctx.name}</h2>
 
 ##<ul>
 ##    % for c in ctx.concepts:

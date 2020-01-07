@@ -10,7 +10,7 @@
         </p>
         <ul class="unstyled">
             % for g in ctx.graphs:
-                % if g.type == 'cluster':
+                % if g.type != 'subgraph':
                     <li>${h.link(request, g)}</li>
                 % endif
             % endfor

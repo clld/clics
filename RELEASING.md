@@ -7,14 +7,8 @@ the `clics` command before:
 - the CLICS sqlite db, running `clics load`
 - `subgraph` and `infomap` clusters, running `clics -t 3 cluster (subgraph|infomap)`
 
-The initialization script will look for these artifacts in a directory `clics3` parallel
-to the clone of the web app repository. So the directory layout should look like this
+To initialize the app db, run
 ```
-+- clics
-+- clics3
- +- app
- | +- cluster
- |   +- infomap
- |   +- subgraph
- +- clics.sqlite
+clics-app init PATH/TO/CLICS_DATA_REPOS
 ```
+

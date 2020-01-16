@@ -11,7 +11,7 @@
 <blockquote>
     Rzymski, Tresoldi, et al. (2019):
     The Database of Cross-Linguistic Colexifications, reproducible analysis of cross- linguistic polysemies.
-    <a href="https://doi.org/10.17613/5awv-6w15">DOI: 10.17613/5awv-6w15</a>
+    <a href="https://doi.org/10.1038/s41597-019-0341-x">DOI: 10.1038/s41597-019-0341-x</a>
 </blockquote>
 
 <p>

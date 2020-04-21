@@ -21,10 +21,10 @@ setup(
     zip_safe=False,
     install_requires=[
         'pyclics>=3.0.1',
-        'clldutils>=3.3',
-        'clld>=5.1.1',
+        'clldutils>=3.5',
+        'clld>=6',
         'clld-glottologfamily-plugin>=3.1',
-        'clldmpg>=3.4',
+        'clldmpg>=3.5',
         'sqlalchemy',
         'waitress',
     ],

@@ -2,9 +2,9 @@
 
 """
 import pathlib
+import argparse
 import subprocess
 import contextlib
-import argparse
 
 from clldutils import db
 import transaction

@@ -8,7 +8,7 @@ from sqlalchemy import (
     or_,
     and_,
 )
-from sqlalchemy.orm import relationship, joinedload_all, aliased, joinedload, backref
+from sqlalchemy.orm import relationship, aliased, joinedload, backref
 
 from clld import interfaces
 from clld.db.meta import Base, CustomModelMixin, PolymorphicBaseMixin, DBSession
@@ -89,8 +89,8 @@ class Concept(CustomModelMixin, Parameter):
     @staticmethod
     def refine_factory_query(query):
         return query.options(
-            joinedload_all(Concept.lo_edges, Edge.colexifications),
-            joinedload_all(Concept.hi_edges, Edge.colexifications),
+            joinedload(Concept.lo_edges).joinedload(Edge.colexifications),
+            joinedload(Concept.hi_edges).joinedload(Edge.colexifications),
         )
 
     @property
@@ -178,7 +178,7 @@ class Graph(Base, PolymorphicBaseMixin, IdNameDescriptionMixin):
 
     @staticmethod
     def refine_factory_query(query):
-        return query.options(joinedload_all(Graph.concept_assocs, GraphConcept.concept))
+        return query.options(joinedload(Graph.concept_assocs).joinedload(GraphConcept.concept))
 
     @property
     def concepts(self):
@@ -196,7 +196,7 @@ class Graph(Base, PolymorphicBaseMixin, IdNameDescriptionMixin):
             .filter(or_(
             and_(Edge.lo_concept == n1, Edge.hi_concept == n2),
             and_(Edge.lo_concept == n2, Edge.hi_concept == n1))) \
-            .options(joinedload_all(Edge.colexifications, Colexification.language)) \
+            .options(joinedload(Edge.colexifications).joinedload(Colexification.language)) \
             .one()
 
     def __json__(self, req):

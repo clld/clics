@@ -6,6 +6,8 @@ from clld.web.icon import MapMarker
 from clldutils import svg
 from clld.web.app import CtxFactoryQuery
 from clld.db.models import common
+from clld.web.adapters.rdf import RdfIndex
+from clld.lib.rdf import convert, FORMATS
 
 # we must make sure custom models are known at database initialization!
 from clics import models
@@ -54,7 +56,10 @@ class ClicsMapMarker(MapMarker):
         return super(ClicsMapMarker, self).__call__(ctx, req)
 
 
-
+class ClicsRdfIndex(RdfIndex):
+    def render(self, ctx, req):
+        # For performance reasons we have to disable the rdf index.
+        return convert(super(RdfIndex, self).render([], req), 'xml', self.rdflibname)
 
 
 def main(global_config, **settings):
@@ -65,5 +70,15 @@ def main(global_config, **settings):
     config.register_resource('graph', models.Graph, IGraph, with_index=True)
     config.register_resource('edge', models.Edge, IEdge, with_index=True)
     config.registry.registerUtility(ClicsMapMarker(), IMapMarker)
+    rdf_xml = FORMATS['xml']
+
     config.registry.registerUtility(ClicsCtxFactoryQuery(), ICtxFactoryQuery)
+    config.register_adapters([
+        (
+            IValue,
+            ClicsRdfIndex,
+            rdf_xml.mimetype,
+            rdf_xml.extension,
+            'index_rdf.mako',
+            {'rdflibname': rdf_xml.name})])
     return config.make_wsgi_app()

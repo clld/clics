@@ -22,7 +22,7 @@ setup(
     install_requires=[
         'pyclics>=3.0.1',
         'clldutils>=3.5',
-        'clld>=8',
+        'clld>=9.2.1',
         'clld-glottologfamily-plugin>=3.1',
         'clldmpg>=4.2',
         'sqlalchemy',

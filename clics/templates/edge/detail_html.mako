@@ -9,6 +9,7 @@
             This edge appears in cluster
         </p>
         <ul class="unstyled">
+            ${ctx.graphs}
             % for g in ctx.graphs:
                 % if g.type != 'subgraph':
                     <li>${h.link(request, g)}</li>

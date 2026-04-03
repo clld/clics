@@ -1,3 +1,5 @@
+import collections
+import itertools
 from collections import Counter
 
 from tqdm import tqdm
@@ -5,16 +7,20 @@ import transaction
 from sqlalchemy.orm import joinedload
 from clld.db.meta import DBSession
 from clld.db.models import common
-from clld.scripts.util import Data
+from clld.cliutil import Data
 
 from clldutils.color import qualitative_colors
+from clldutils.misc import slug
 from clldutils.jsonlib import load
+from pycldf import Dataset
 
 from pyclics.zenodo import iter_records
 from pyclics.util import iter_subgraphs
 
 import clics
 from clics import models
+
+import clld.__main__
 
 
 def ids(wid1, wid2, wid2pid):
@@ -27,160 +33,193 @@ def ids(wid1, wid2, wid2pid):
 
 
 def main(args):
+
     data = Data()
-    api = args.repos
-    concept_definitions = {k: v.definition for k, v in args.concepticon.conceptsets.items()}
-    zenodo = {(rec.dataset_id, rec.tag): rec.doi for rec in iter_records() if rec.doi}
+    wl = Dataset.from_metadata(args.cldf.directory / 'Wordlist-metadata.json')
+    #api = args.repos
+    ds = args.cldf
+    # Load concepticon data:
+    concepticon = Dataset.from_metadata('/home/robert/projects/concepticon/concepticon-cldf/cldf/Wordlist-metadata.json')
+    #zenodo = {(rec.dataset_id, rec.tag): rec.doi for rec in iter_records() if rec.doi}
     # Looking up dataset versions is somewhat messy, because we cannot blindly trust the
     # `version` column in the database.
     datasetspec = {}
-    for line in api.repos.joinpath('datasets.md').read_text(encoding='utf8').splitlines():
-        line = line.strip()
-        if line.startswith('|'):
-            row = [c.strip() for c in line[1:-1].split('|')]
-            assert len(row) == 5
-            datasetspec[row[-1]] = row[-3]
+    #for line in api.repos.joinpath('datasets.md').read_text(encoding='utf8').splitlines():
+    #    line = line.strip()
+    #    if line.startswith('|'):
+    #        row = [c.strip() for c in line[1:-1].split('|')]
+    #        assert len(row) == 5
+    #        datasetspec[row[-1]] = row[-3]
 
     dataset = common.Dataset(
         id=clics.__name__,
-        name="CLICS³",
+        name="CLICS⁴",
         description="Database of Cross-Linguistic Colexifications",
-        publisher_name="Max Planck Institute for the Science of Human History",
-        publisher_place="Jena",
-        publisher_url="http://www.shh.mpg.de",
+        publisher_name="Max Planck Institute for Evolutionary Anthropology",
+        publisher_place="Leipzig",
+        publisher_url="http://www.eva.mpg.de",
         license="https://creativecommons.org/licenses/by/4.0/",
         domain='clics.clld.org',
-        contact='clics@shh.mpg.de',
+        contact='clics@eva.mpg.de',
         jsondata={
-            'doi': args.doi,
+            'doi': '10.5281/zenodo.16900180',
             'license_icon': 'cc-by.png',
             'license_name': 'Creative Commons Attribution 4.0 International License'})
 
     for i, (id_, name) in enumerate([
-        ('list', 'Johann-Mattis List'),
-        ('rzymski', 'Christoph Rzymski'),
-        ('tresoldi', 'Tiago Tresoldi'),
-        ('greenhill', 'Simon Greenhill'),
+        ('tjuka', 'Annika Tjuka'),
         ('forkel', 'Robert Forkel'),
+        ('rzymski', 'Christoph Rzymski'),
+        ('list', 'Johann-Mattis List'),
     ]):
         ed = data.add(common.Contributor, id_, id=id_, name=name)
         common.Editor(dataset=dataset, contributor=ed, ord=i + 1)
     DBSession.add(dataset)
 
-    for dsid, meta in api.db.datasetmeta.items():
-        meta = {r[0]: r[1] for r in meta}
-        jsondata = {}
-        if 'dc:format' in meta:
-            cls = meta['dc:format']
-            if cls.startswith('['):
-                cls = eval(cls)
-            else:
-                cls = [cls]
-            jsondata['conceptlists'] = [cl.split('/')[-1] for cl in cls]
-        if 'dc:bibliographicCitation' not in meta:
-            print(dsid, 'missing citation')
-            assert dsid == 'lexirumah'
-            meta['dc:bibliographicCitation'] = \
-                "Gereon Kaiping, Owen Edwards, & Marian Klamer. (2019). LexiRumah 3.0.0 " \
-                "(Version v3.0.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.3537977"
+    for contrib in ds.objects('ContributionTable'):
         data.add(
             models.ClicsDataset,
-            dsid,
-            id=dsid,
-            name=meta['dc:title'],
-            doi=zenodo[dsid, datasetspec[dsid]],
-            source_citation=meta['dc:bibliographicCitation'],
-            jsondata=jsondata,
+            contrib.id,
+            id=contrib.id,
+            name=contrib.cldf.description,
+            doi=contrib.data['DOI'],
+            source_citation=contrib.data['Citation'],
+            jsondata={},
         )
 
-    for c in sorted(api.db.iter_concepts(), key=lambda c_: int(c_.id)):
+    concept_definitions = {}
+    for c in concepticon.objects('ParameterTable'):
+        concept_definitions[c.id] = c.cldf.description
         data.add(
             models.Concept,
             c.id,
             id=c.id,
-            name=c.gloss,
-            description=concept_definitions[c.id],
-            category=c.ontological_category,
-            semanticfield=c.semantic_field)
+            name=c.cldf.name,
+            description=c.cldf.description,
+            category=c.data['Ontological_Category'],
+            semanticfield=c.data['Semantic_Field'])
 
     DBSession.flush()
     datasets = {k: obj.pk for k, obj in data['ClicsDataset'].items()}
     concepts = {k: obj.pk for k, obj in data['Concept'].items()}
+    concepts_by_name = {obj.name: obj.pk for k, obj in data['Concept'].items()}
+    conceptid_by_name = {obj.name: obj.id for k, obj in data['Concept'].items()}
     transaction.commit()
 
+    forms_by_variety = collections.defaultdict(list)
+    for row in wl.iter_rows('FormTable'):
+        forms_by_variety[row['Language_ID']].append(row)
+    pid2cid = {}
+    for row in wl.iter_rows('ParameterTable'):
+        pid2cid[row['ID']] = row['Concepticon_ID']
+
     wid2cid = {}
-    varieties = api.db.varieties
-    families = Counter(v.family for v in varieties)
+    varieties = args.cldf.objects('LanguageTable')
+    families = Counter(v.data['Family_Name'] for v in varieties)
     families = dict(zip([r[0] for r in families.most_common()], qualitative_colors(len(families))))
-    for variety, forms in tqdm(api.db.iter_wordlists(varieties), total=len(varieties)):
+    for variety in tqdm(varieties, total=len(varieties)):
+        #ID,Name,Macroarea,Latitude,Longitude,Glottocode,ISO639P3code,Glottolog_Name,Family,Concept_Count,Form_Count,
+        # Contribution_ID,Family_Name
+
         transaction.begin()
         data = Data()
-        dspk = datasets[variety.source]
+        #dspk = datasets[variety.source]
         v = models.Doculect(
-            id=variety.gid,
-            name=variety.name,
-            color=families[variety.family],
-            family_name=variety.family,
-            glottocode=variety.glottocode,
-            macroarea=variety.macroarea,
-            latitude=variety.latitude,
-            longitude=variety.longitude,
-            contribution_pk=dspk)
+            id=variety.id,
+            name=variety.cldf.name,
+            color=families[variety.data['Family_Name']],
+            family_name=variety.data['Family_Name'],
+            glottocode=variety.cldf.glottocode,
+            macroarea=variety.cldf.macroarea,
+            latitude=variety.cldf.latitude,
+            longitude=variety.cldf.longitude,
+            contribution_pk=datasets[variety.cldf.contributionReference])
 
-        for form in forms:
-            vs = data['ValueSet'].get((variety.id, form.concepticon_id))
+        for form in forms_by_variety[variety.id]:
+            #OrderedDict({
+            # 'ID': '1-world-1', 'Language_ID': '1', 'Parameter_ID': 'world',
+            # 'Form': 'wereld', 'Segments': ['ʋ', 'eː', 'r', 'ə', 'l', 't'],
+            # 'Comment': None, 'Source': ['wold'], 'Value': 'wereld', 'Local_ID': 'wold-Dutch-1-1-1',
+            # 'Graphemes': None, 'Profile': None, 'Cognacy': None, 'Loan': None, 'ConceptInSource': None})
+            key = (variety.id, pid2cid[form['Parameter_ID']])
+            vs = data['ValueSet'].get(key)
             if not vs:
                 vs = data.add(
                     common.ValueSet,
-                    (variety.id, form.concepticon_id),
-                    id='{0}-{1}'.format(variety.gid, form.concepticon_id),
+                    key,
+                    id='{0}-{1}'.format(*key),
                     language=v,
-                    contribution_pk=dspk,
-                    parameter_pk=concepts[form.concepticon_id])
+                    contribution_pk=datasets[variety.cldf.contributionReference],
+                    parameter_pk=concepts[pid2cid[form['Parameter_ID']]])
             value = models.Form(
-                id=form.gid,
+                id=form['ID'],
                 valueset=vs,
-                name=form.clics_form,
-                source_form=form.form,
-                source_gloss=form.gloss)
+                name=form['Form'],
+                source_form=form['Value'],
+                #source_gloss=form.gloss  # FIXME: use concept name from wordlist data!
+            )
             wid2cid[value.id] = vs.parameter_pk
 
         DBSession.add(v)
         transaction.commit()
 
-    c_by_pk, c_by_id = {}, {}
+    #return
+
+    c_by_pk, c_by_id, c_by_name = {}, {}, {}
     for c in DBSession.query(models.Concept):
         c_by_id[c.id] = c
         c_by_pk[c.pk] = c
+        c_by_name[slug(c.name)] = c
     for k in wid2cid:
         wid2cid[k] = c_by_pk[wid2cid[k]]
     values = {v.id: v.pk for v in DBSession.query(common.Value)}
     varieties = {v.id: v.pk for v in DBSession.query(models.Doculect)}
 
     data = Data()
-    g = api.load_graph('network', threshold=3, edgefilter='families')
-    for nodeA, nodeB, data_ in tqdm(g.edges(data=True), desc='loading colexifications'):
-        for word in data_['wofam'].split(';'):
-            w1, w2, entry, lid, fam, ovalA, ovalB = word.split('/')
-            lo_wid, hi_wid, lo_c, hi_c = ids(w1, w2, wid2cid)
-            eid = '{0}-{1}'.format(lo_c.id, hi_c.id)
+    # args.cldf.iter_rows('ParameterTable')
+    #ID,Name,Description,ColumnSpec,Source_Concept,Target_Concept,Form_Count,Variety_Count,Language_Count,Family_Count,Variety_Weight,Language_Weight,Family_Weight,Forms,Varieties,Languages,Families
+    #OrderedDict({'ID': '1', 'Name': 'WORLD/DONKEY', 'Description': 'Colexification of WORLD and DONKEY.',
+    # 'ColumnSpec': None, 'Source_Concept': 'WORLD', 'Target_Concept': 'DONKEY',
+    # 'Form_Count': 1, 'Variety_Count': 1, 'Language_Count': 1, 'Family_Count': 1,
+    # 'Variety_Weight': 0.0, 'Language_Weight': 0.0, 'Family_Weight': 0.0,
+    # 'Forms': ['clics4-10-world-2', '/', 'clics4-10-donkey-1'], 'Varieties': ['clics4-10'],
+    # 'Languages': ['thai1261'], 'Families': ['taik1256']})
+
+    #g = api.load_graph('network', threshold=3, edgefilter='families')
+    #for nodeA, nodeB, data_ in tqdm(g.edges(data=True), desc='loading colexifications'):
+    #    for word in data_['wofam'].split(';'):
+
+    for row in args.cldf.iter_rows('ParameterTable'):
+            #w1, w2, entry, lid, fam, ovalA, ovalB = word.split('/')
+            #lo_wid, hi_wid, lo_c, hi_c = ids(w1, w2, wid2cid)
+            eid = '{0}-{1}'.format(
+                conceptid_by_name[row['Source_Concept']], conceptid_by_name[row['Target_Concept']])
             edge = data['Edge'].get(eid)
             if not edge:
                 edge = data.add(
                     models.Edge,
                     eid,
                     id=eid,
-                    name='"{0}" and "{1}"'.format(lo_c.name, hi_c.name),
-                    lo_concept=lo_c,
-                    hi_concept=hi_c)
-            DBSession.add(models.Colexification(
-                id='{0}__{1}'.format(lo_wid, hi_wid),
-                name=entry,
-                language_pk=varieties[lid],
-                edge=edge,
-                lo_word_pk=values[lo_wid],
-                hi_word_pk=values[hi_wid]))
+                    name='"{0}" and "{1}"'.format(row['Source_Concept'], row['Target_Concept']),
+                    lo_concept_pk=concepts_by_name[row['Source_Concept']],
+                    hi_concept_pk=concepts_by_name[row['Target_Concept']])
+            for wp in row['Forms']:
+                lo_wid, _, hi_wid = wp.replace('clics4-', '').partition('/')
+                lid = []
+                for k, v in zip(lo_wid.split('-'), hi_wid.split('-')):
+                    if k == v:
+                        lid.append(k)
+                    else:
+                        break
+                DBSession.add(models.Colexification(
+                    id='{0}__{1}'.format(lo_wid, hi_wid),
+                    name=wp,
+                    language_pk=varieties['-'.join(lid)],  # the common prefix of lo_wid and hi_wid
+                    edge=edge,
+                    lo_word_pk=values[lo_wid],
+                    hi_word_pk=values[hi_wid]))
 
+    DBSession.flush()
     edges = set((e.lo_concept.id, e.hi_concept.id) for e in data['Edge'].values())
 
     def make_graph(id_, name, type_, nodes, concept=None):
@@ -194,17 +233,32 @@ def main(args):
                 count_concepts=len(nodeset),
                 count_edges=sum(1 for e in edges if nodeset.issuperset(e)))
             for node in nodeset:
-                models.GraphConcept(graph=graph, concept=c_by_id[node])
+                models.GraphConcept(graph=graph, concept_pk=c_by_name[node].pk)
             DBSession.add(graph)
 
-    for d in api.path('app', 'cluster').iterdir():
-        if d.is_dir() and d.name != 'subgraph':
-            for fname in tqdm(d.glob('*.json'), desc='loading cluster graphs'):
-                make_graph(
-                    fname.stem,
-                    fname.stem.split('_', 2)[2],
-                    d.name,
-                    [n['ID'] for n in load(fname)['nodes']])
+    for community, rows in itertools.groupby(
+        sorted(args.cldf.iter_rows('concepts.csv'), key=lambda r: r['Community']),
+        lambda r: r['Community'],
+    ):
+        rows = list(rows)
+        # Community
+        # Central_Concept
+        make_graph(
+            rows[0]['CentralConcept'],
+            rows[0]['CentralConcept'],
+            'infomap',
+            [r['ID'] for r in rows])
+
+    #for d in api.path('app', 'cluster').iterdir():
+    #    if d.is_dir() and d.name != 'subgraph':
+    #        for fname in tqdm(d.glob('*.json'), desc='loading cluster graphs'):
+    #            make_graph(
+    #                fname.stem,
+    #                fname.stem.split('_', 2)[2],
+    #                d.name,
+    #                [n['ID'] for n in load(fname)['nodes']])
+
+    return
 
     for n, sg in iter_subgraphs(api.load_graph('network', 3, 'families')):
         make_graph(

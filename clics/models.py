@@ -40,7 +40,7 @@ class ClicsDataset(CustomModelMixin, Contribution):
     def conceptlist_link(self, req):
         if 'conceptlists' in self.jsondata:
             return HTML.ul(
-                *[HTML.li(concepticon.link( req, clid, obj_type='ConceptList', label=clid))
+                *[HTML.li(concepticon.link(req, clid, obj_type='ConceptList', label=clid))
                   for clid in self.jsondata['conceptlists']])
         else:
             return ''
@@ -94,10 +94,9 @@ class Concept(CustomModelMixin, Parameter):
         )
 
     @property
-    def cluster(self):
+    def community(self):
         return DBSession.query(Graph).join(GraphConcept) \
             .filter(GraphConcept.concept_pk == self.pk) \
-            .filter(Graph.type == 'infomap') \
             .first()
 
     @property
@@ -150,7 +149,7 @@ class Edge(Base, PolymorphicBaseMixin, IdNameDescriptionMixin):
         return DBSession.query(Graph).join(lc).join(hc) \
             .filter(self.lo_concept_pk == hc.concept_pk) \
             .filter(self.hi_concept_pk == lc.concept_pk) \
-            .distinct()
+            .distinct().all()
 
     def adjacency(self, req, n):
         words, languages = [], set()
@@ -170,7 +169,6 @@ class Edge(Base, PolymorphicBaseMixin, IdNameDescriptionMixin):
 
 @implementer(IGraph)
 class Graph(Base, PolymorphicBaseMixin, IdNameDescriptionMixin):
-    type = Column(Unicode)  # subgraph, infomap, ...
     count_concepts = Column(Integer)
     count_edges = Column(Integer)
     concept_pk = Column(Integer, ForeignKey('concept.pk'))

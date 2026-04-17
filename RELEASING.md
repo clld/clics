@@ -12,3 +12,11 @@ To initialize the app db, run
 clics-app init PATH/TO/CLICS_DATA_REPOS
 ```
 
+FIXME:
+
+
+
+clics4:
+```shell
+clld initdb development.ini --cldf ../clics4/cldf/StructureDataset-metadata.json
+```

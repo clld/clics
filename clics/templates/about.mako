@@ -5,13 +5,11 @@
 <h2>About CLICS</h2>
 
 <p>
-    This web site serves as a browseable of the data described in the paper
+    This web site serves as a browseable version of the data described in the paper
 </p>
 
 <blockquote>
-    Rzymski, Tresoldi, et al. (2019):
-    The Database of Cross-Linguistic Colexifications, reproducible analysis of cross- linguistic polysemies.
-    <a href="https://doi.org/10.1038/s41597-019-0341-x">DOI: 10.1038/s41597-019-0341-x</a>
+    Tjuka, Annika; Forkel, Robert; Rzymski, Christoph; and List, Johann-Mattis (forthcoming): Advancing the Database of Cross-Linguistic Colexifications with New Workflows and Data. Proceedings of the 16th International Conference on Computational Semantics (IWCS). Düsseldorf: Association for Computational Linguistics. 1-15. Preprint: https://doi.org/10.48550/arXiv.2503.11377
 </blockquote>
 
 <p>

@@ -18,7 +18,7 @@
         ##    % endfor
         ##</ul>
     </%util:well>
-        % if 'conceptlists' in ctx.jsondata:
+        % if ctx.jsondata.get('conceptlists'):
             <%util:well title="Conceptlists">
                 <p>
                     The concept lists for this dataset are available at Concepticon as

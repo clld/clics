@@ -107,20 +107,11 @@ class Graphs(DataTable):
         return opts
 
 
-class ClusterCol(Col):
+class CommunityCol(Col):
     __kw__ = {'bSearchable': False, 'bSortable': False}
 
     def format(self, item):
-        g = item.cluster
-        if g:
-            return link(self.dt.req, g)
-
-
-class SubgraphCol(Col):
-    __kw__ = {'bSearchable': False, 'bSortable': False}
-
-    def format(self, item):
-        g = item.subgraph
+        g = item.community
         if g:
             return link(self.dt.req, g)
 
@@ -140,8 +131,7 @@ class Concepts(Parameters):
             ConcepticonCol(self, '#', sTitle=''),
             Col(self, 'count_varieties', model_col=Concept.count_varieties, sTitle='# varieties'),
             Col(self, 'count_colexifications', model_col=Concept.count_colexifications, sTitle='# colexifications'),
-            ClusterCol(self, 'infomap'),
-            SubgraphCol(self, 'subgraph'),
+            CommunityCol(self, 'community'),
         ]
 
 

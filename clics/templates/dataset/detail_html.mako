@@ -9,9 +9,10 @@
 
 <%def name="sidebar()">
     <%util:well title="Cite">
-        Rzymski, Christoph and Tresoldi, Tiago et al. 2019.
-        The Database of Cross-Linguistic Colexifications, reproducible analysis of cross- linguistic polysemies.
-        <a href="https://doi.org/10.1038/s41597-019-0341-x">DOI: 10.1038/s41597-019-0341-x</a>
+        Tjuka, Annika; Forkel, Robert; Rzymski, Christoph; and List, Johann-Mattis (2026):
+        CLICS⁴: An Improved Database of Cross-Linguistic Colexifications [Dataset, Version 1.0].
+        Passau: MCL Chair at the University of Passau.
+        <a href="https://doi.org/10.5281/zenodo.16900179">DOI: 10.5281/zenodo.16900179</a>
     </%util:well>
     <div id="map" style="visibility: hidden"></div>
     <div id="info" class="" style="visibility: hidden"></div>
@@ -38,11 +39,15 @@
     shortcomings. Building on standardization efforts reflected in
     the CLDF initiative and novel approaches for fast, efficient, and
     reliable data aggregation, CLICS² expanded the original CLICS database.
-    CLICS³ - the third installment of CLICS - exploits the framework pioneered in CLICS²
+    CLICS³ - the third installment of CLICS - exploited the framework pioneered in CLICS²
     to more than double the amount of data aggregated in the database.
 </p>
+<p>
+    CLICS⁴ adds even more data and improves upon CLICS³ in several ways, described in
+    <a href="https://doi.org/10.48550/arXiv.2503.11377">Tjuka et al. 2025</a>.
+</p>
 
-<div id="visualization" style="padding-top: 0; margin-top: 0px;">
+<div id="visualization" style="padding-top: 0; margin-top: 100px;">
     <div id="vis" style="padding-top: 0;"></div>
 </div>
 

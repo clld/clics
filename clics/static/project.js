@@ -297,7 +297,7 @@ CLICS.Graph = function (url, world_json, options) {
             })
             .on("click", function(d, i) {
                 if (d.node.OutEdge.length > 0) {
-                    window.location = '/graphs/subgraph_' + d.node.id;
+                    window.location = '/parameters/' + d.node.id;
                 }
             })
             .on('mouseover', function (d, i) {
@@ -350,7 +350,7 @@ CLICS.Graph = function (url, world_json, options) {
                     outstring += d.node.OutEdge[j][0] + '\n';
                 }
                 if (d.node.OutEdge.length > 0) {
-                    return 'click to navigate to subgraph centered at ' + d.node.label;
+                    return 'click to navigate to concept ' + d.node.label;
                 }
             });
 

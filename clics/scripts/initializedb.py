@@ -1,3 +1,4 @@
+import re
 import collections
 import itertools
 from collections import Counter
@@ -22,6 +23,8 @@ from clics import models
 
 import clld.__main__
 
+CL_PATTERN = re.compile(r'concepticon\.clld\.org/contributions/(?P<id>.+)')
+
 
 def ids(wid1, wid2, wid2pid):
     p1, p2 = wid2pid[wid1], wid2pid[wid2]
@@ -32,24 +35,20 @@ def ids(wid1, wid2, wid2pid):
     return wid1, wid2, p1, p2
 
 
-def main(args):
+def _iter_conceptlist_ids(md_path):
+    md = load(md_path)
+    for cl in md.get('dc:format', []):
+        m = CL_PATTERN.search(cl)
+        if m:
+            yield m.group('id')
 
+
+def main(args):
     data = Data()
     wl = Dataset.from_metadata(args.cldf.directory / 'Wordlist-metadata.json')
-    #api = args.repos
     ds = args.cldf
     # Load concepticon data:
     concepticon = Dataset.from_metadata('/home/robert/projects/concepticon/concepticon-cldf/cldf/Wordlist-metadata.json')
-    #zenodo = {(rec.dataset_id, rec.tag): rec.doi for rec in iter_records() if rec.doi}
-    # Looking up dataset versions is somewhat messy, because we cannot blindly trust the
-    # `version` column in the database.
-    datasetspec = {}
-    #for line in api.repos.joinpath('datasets.md').read_text(encoding='utf8').splitlines():
-    #    line = line.strip()
-    #    if line.startswith('|'):
-    #        row = [c.strip() for c in line[1:-1].split('|')]
-    #        assert len(row) == 5
-    #        datasetspec[row[-1]] = row[-3]
 
     dataset = common.Dataset(
         id=clics.__name__,
@@ -77,6 +76,8 @@ def main(args):
     DBSession.add(dataset)
 
     for contrib in ds.objects('ContributionTable'):
+        md = ds.directory.parent / 'raw' / contrib.id / 'cldf' / 'cldf-metadata.json'
+        assert md.exists()
         data.add(
             models.ClicsDataset,
             contrib.id,
@@ -84,7 +85,7 @@ def main(args):
             name=contrib.cldf.description,
             doi=contrib.data['DOI'],
             source_citation=contrib.data['Citation'],
-            jsondata={},
+            jsondata={'conceptlists': list(_iter_conceptlist_ids(md))},
         )
 
     concept_definitions = {}
@@ -102,6 +103,7 @@ def main(args):
     DBSession.flush()
     datasets = {k: obj.pk for k, obj in data['ClicsDataset'].items()}
     concepts = {k: obj.pk for k, obj in data['Concept'].items()}
+    concept_names = {k: obj.name for k, obj in data['Concept'].items()}
     concepts_by_name = {obj.name: obj.pk for k, obj in data['Concept'].items()}
     conceptid_by_name = {obj.name: obj.id for k, obj in data['Concept'].items()}
     transaction.commit()
@@ -156,14 +158,12 @@ def main(args):
                 valueset=vs,
                 name=form['Form'],
                 source_form=form['Value'],
-                #source_gloss=form.gloss  # FIXME: use concept name from wordlist data!
+                source_gloss=form['ConceptInSource'] or concept_names[pid2cid[form['Parameter_ID']]],
             )
             wid2cid[value.id] = vs.parameter_pk
 
         DBSession.add(v)
         transaction.commit()
-
-    #return
 
     c_by_pk, c_by_id, c_by_name = {}, {}, {}
     for c in DBSession.query(models.Concept):
@@ -222,13 +222,12 @@ def main(args):
     DBSession.flush()
     edges = set((e.lo_concept.id, e.hi_concept.id) for e in data['Edge'].values())
 
-    def make_graph(id_, name, type_, nodes, concept=None):
+    def make_graph(id_, name, nodes, concept=None):
         nodeset = set(nodes)
         if len(nodeset) > 1:
             graph = models.Graph(
                 id=id_,
                 name=name,
-                type=type_,
                 concept_pk=concept.pk if concept else None,
                 count_concepts=len(nodeset),
                 count_edges=sum(1 for e in edges if nodeset.issuperset(e)))
@@ -246,28 +245,7 @@ def main(args):
         make_graph(
             rows[0]['CentralConcept'],
             rows[0]['CentralConcept'],
-            'infomap',
             [r['ID'] for r in rows])
-
-    #for d in api.path('app', 'cluster').iterdir():
-    #    if d.is_dir() and d.name != 'subgraph':
-    #        for fname in tqdm(d.glob('*.json'), desc='loading cluster graphs'):
-    #            make_graph(
-    #                fname.stem,
-    #                fname.stem.split('_', 2)[2],
-    #                d.name,
-    #                [n['ID'] for n in load(fname)['nodes']])
-
-    return
-
-    for n, sg in iter_subgraphs(api.load_graph('network', 3, 'families')):
-        make_graph(
-            'subgraph_{0}'.format(n),
-            'Subgraph {0}'.format(c_by_id[n].name),
-            'subgraph',
-            sg,
-            concept=c_by_id[n],
-        )
 
     return
 

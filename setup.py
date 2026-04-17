@@ -12,8 +12,8 @@ setup(
         "Topic :: Internet :: WWW/HTTP",
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
     ],
-    author='SHH DLCE Dev',
-    author_email='lingweb@shh.mpg.de',
+    author='MPI EVA DLCE Dev',
+    author_email='dlce.rdm@eva.mpg.de',
     url='',
     keywords='web pyramid pylons',
     packages=find_packages(),
@@ -38,7 +38,7 @@ setup(
         'test': [
             'psycopg2-binary',
             'mock',
-            'pytest>=3.1',
+            'pytest',
             'pytest-clld>=0.4',
             'pytest-mock',
             'pytest-cov',
@@ -49,9 +49,6 @@ setup(
     },
     test_suite="clics",
     entry_points={
-        'console_scripts': [
-            'clics-app=clics.__main__:main',
-        ],
         'paste.app_factory': [
             'main=clics:main',
         ]

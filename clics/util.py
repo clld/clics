@@ -7,5 +7,5 @@ from clics.models import GraphConcept, Graph, Concept
 def dataset_detail_html(context=None, request=None, **kw):
     return dict(
         graph=DBSession.query(Graph).join(GraphConcept).join(Concept)
-            .filter(Parameter.name=='FEATHER').filter(Graph.type=='infomap').first(),
+            .filter(Parameter.name=='FEATHER').first(),
         count_langs=DBSession.query(Language).count())

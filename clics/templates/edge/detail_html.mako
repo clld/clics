@@ -4,27 +4,18 @@
 <%block name="title">${_('Edge')} ${ctx.name}</%block>
 
 <%def name="sidebar()">
+    % if ctx.graphs:
     <%util:well title="Graphs">
         <p>
-            This edge appears in cluster
+            This edge appears in community
         </p>
         <ul class="unstyled">
-            ${ctx.graphs}
             % for g in ctx.graphs:
-                % if g.type != 'subgraph':
-                    <li>${h.link(request, g)}</li>
-                % endif
-            % endfor
-        </ul>
-        <p>and subgraphs</p>
-        <ul>
-            % for g in ctx.graphs:
-                % if g.type == 'subgraph':
-                    <li>${h.link(request, g)}</li>
-                % endif
+            <li>${h.link(request, g)}</li>
             % endfor
         </ul>
     </%util:well>
+    % endif
 </%def>
 
 <h2>Colexifications for ${ctx.name}</h2>

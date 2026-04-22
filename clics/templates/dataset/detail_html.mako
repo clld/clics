@@ -44,7 +44,7 @@
 </p>
 <p>
     CLICS⁴ adds even more data and improves upon CLICS³ in several ways, described in
-    <a href="https://doi.org/10.48550/arXiv.2503.11377">Tjuka et al. 2025</a>.
+    <a href="https://aclanthology.org/2025.iwcs-main.1/">Tjuka et al. 2025</a>.
 </p>
 
 <div id="visualization" style="padding-top: 0; margin-top: 100px;">

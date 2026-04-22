@@ -9,7 +9,9 @@
 </p>
 
 <blockquote>
-    Tjuka, Annika; Forkel, Robert; Rzymski, Christoph; and List, Johann-Mattis (forthcoming): Advancing the Database of Cross-Linguistic Colexifications with New Workflows and Data. Proceedings of the 16th International Conference on Computational Semantics (IWCS). Düsseldorf: Association for Computational Linguistics. 1-15. Preprint: https://doi.org/10.48550/arXiv.2503.11377
+    Annika Tjuka, Robert Forkel, Christoph Rzymski, and Johann-Mattis List. 2025. Advancing the Database of Cross-Linguistic Colexifications with New Workflows and Data. In Proceedings of the 16th International Conference on Computational Semantics, pages 1–15, Düsseldorf, Germany. Association for Computational Linguistics.
+    <br/>
+    ${h.external_link('https://aclanthology.org/2025.iwcs-main.1/')}
 </blockquote>
 
 <p>

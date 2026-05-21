@@ -174,10 +174,6 @@ class Graph(Base, PolymorphicBaseMixin, IdNameDescriptionMixin):
     concept_pk = Column(Integer, ForeignKey('concept.pk'))
     concept = relationship(Concept, backref=backref('subgraph', uselist=False))
 
-    @staticmethod
-    def refine_factory_query(query):
-        return query.options(joinedload(Graph.concept_assocs).joinedload(GraphConcept.concept))
-
     @property
     def concepts(self):
         return sorted([ca.concept for ca in self.concept_assocs], key=lambda c: int(c.id))
@@ -198,6 +194,8 @@ class Graph(Base, PolymorphicBaseMixin, IdNameDescriptionMixin):
             .one()
 
     def __json__(self, req):
+        if 'graph' in self.jsondatadict:
+            return self.jsondata['graph']
         languages = set()
         adjacency = []
         nodes = []

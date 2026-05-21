@@ -262,6 +262,11 @@ def prime_cache(args):
     for v in DBSession.query(common.Language).options(joinedload(common.Language.valuesets)):
         v.count_concepts = len(v.valuesets)
 
+    # generate and store the JSON representation of all Graphs!
+    for i, g in enumerate(DBSession.query(models.Graph)):
+        print(g.id)
+        g.update_jsondata(graph=g.__json__(args.env['request']))
+
     lang_counts = {
         r[0]: (r[1], r[2]) for r in DBSession.execute("""\
 select

@@ -1,22 +1,30 @@
-
 # CLICS clld app
 
-The database of the CLICS clld app is initialized reading data of a CLICS
-dataset via pyclics. To do so, several artifacts must have been created with
-the `clics` command before:
-- the CLICS sqlite db, running `clics load`
-- `subgraph` and `infomap` clusters, running `clics -t 3 cluster (subgraph|infomap)`
-
-To initialize the app db, run
+```shell
+git clone https://github.com/clld/clics
+git clone --branch v1.0 --depth 1 https://github.com/clics/clics4
+cd clics4
+pip install -e .
+cldfbench download lexibank_clics4.py
+cd ../clics
+pip install -e .[test]
 ```
-clics-app init PATH/TO/CLICS_DATA_REPOS
-```
 
-FIXME:
-
-
-
-clics4:
 ```shell
 clld initdb development.ini --cldf ../clics4/cldf/StructureDataset-metadata.json
 ```
+
+```shell
+pytest
+```
+
+Store the tested requirements:
+```shell
+pip freeze > requirements.txt
+```
+
+Store a db dump:
+```shell
+pg_dump -xO --compress gzip:9 clics > clics.sql.gz
+```
+

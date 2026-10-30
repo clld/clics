@@ -1,4 +1,5 @@
 import re
+import csv
 import collections
 import itertools
 from collections import Counter
@@ -24,6 +25,7 @@ from clics import models
 import clld.__main__
 
 CL_PATTERN = re.compile(r'concepticon\.clld\.org/contributions/(?P<id>.+)')
+csv.field_size_limit(1000000)
 
 
 def ids(wid1, wid2, wid2pid):

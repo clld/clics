@@ -235,16 +235,16 @@ def main(args):
                 models.GraphConcept(graph=graph, concept_pk=c_by_name[node].pk)
             DBSession.add(graph)
 
-    for community, rows in itertools.groupby(
-        sorted(args.cldf.iter_rows('concepts.csv'), key=lambda r: r['Community']),
-        lambda r: r['Community'],
+    for cc, rows in itertools.groupby(
+        sorted(args.cldf.iter_rows('concepts.csv'), key=lambda r: r['CentralConcept']),
+        lambda r: r['CentralConcept'],
     ):
         rows = list(rows)
         # Community
         # Central_Concept
         make_graph(
-            rows[0]['CentralConcept'],
-            rows[0]['CentralConcept'],
+            cc,
+            cc,
             [r['ID'] for r in rows])
 
     return

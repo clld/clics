@@ -69,7 +69,7 @@ nameparser==2.8.0
 networkx==3.7
 newick==1.11.0
 numpy==2.5.4
-oauthlib==4.0.0
+oauthlib==4.0.1
 openpyxl==3.1.5
 outcome==1.3.0.post0
 packaging==26.3
